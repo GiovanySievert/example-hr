@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardContent, Typography } from '@/shared/components';
+import { Card, Typography } from '@/shared/components';
 
 import type { Balance, TimeOffRequest } from '../api/types';
 import {
@@ -38,8 +38,8 @@ export function PendingApprovalRow({
   const approveDisabled = deciding || stale || balanceLoading || insufficient || !balance;
 
   return (
-    <Card className="w-full max-w-md">
-      <CardContent className="flex flex-col gap-4 p-6">
+    <Card className="w-full">
+      <div className="flex flex-col gap-5 p-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-1">
             <Typography variant="small">
@@ -60,7 +60,7 @@ export function PendingApprovalRow({
           onApprove={onApprove}
           onDeny={onDeny}
         />
-      </CardContent>
+      </div>
     </Card>
   );
 }

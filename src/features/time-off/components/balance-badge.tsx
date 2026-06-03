@@ -1,3 +1,5 @@
+import { Badge } from '@/shared/components';
+
 import { BalanceCardStatus } from '../api/enums';
 
 const badgeConfig: Record<
@@ -25,15 +27,15 @@ type BalanceBadgeProps = {
 
 export function BalanceBadge({ status, onAcknowledge }: BalanceBadgeProps) {
   const { label, className } = badgeConfig[status];
+  const interactive = status === BalanceCardStatus.Refreshed;
+
+  if (!interactive) {
+    return <Badge className={className}>{label}</Badge>;
+  }
 
   return (
-    <button
-      type="button"
-      onClick={onAcknowledge}
-      disabled={status !== BalanceCardStatus.Refreshed}
-      className={`rounded-full border px-2 py-0.5 text-xs font-medium ${className}`}
-    >
-      {label}
+    <button type="button" onClick={onAcknowledge} className="cursor-pointer">
+      <Badge className={className}>{label}</Badge>
     </button>
   );
 }

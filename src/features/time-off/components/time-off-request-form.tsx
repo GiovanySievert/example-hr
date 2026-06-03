@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { Button, Input, Typography } from '@/shared/components';
+import { Button, Input, Select, Typography } from '@/shared/components';
 
 export type LocationOption = { id: string; label: string };
 
@@ -12,6 +12,14 @@ type TimeOffRequestFormProps = {
   submitting?: boolean;
   onSubmit: (values: { locationId: string; days: number }) => void;
 };
+
+function FormError({ message }: { message: string }) {
+  return (
+    <Typography variant="small" className="text-foreground">
+      {message}
+    </Typography>
+  );
+}
 
 export function TimeOffRequestForm({
   locations,
@@ -46,24 +54,20 @@ export function TimeOffRequestForm({
     onSubmit({ locationId, days: parsedDays });
   }
 
+  const submitLabel = submitting ? 'Submitting…' : 'Request time off';
+
   return (
     <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-4">
       <div className="flex flex-col gap-1">
         <label htmlFor="location" className="text-sm font-medium text-foreground">
           Location
         </label>
-        <select
+        <Select
           id="location"
           value={locationId}
           onChange={(event) => setLocationId(event.target.value)}
-          className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          {locations.map((location) => (
-            <option key={location.id} value={location.id}>
-              {location.label}
-            </option>
-          ))}
-        </select>
+          options={locations.map((location) => ({ value: location.id, label: location.label }))}
+        />
       </div>
 
       <div className="flex flex-col gap-1">
@@ -80,14 +84,10 @@ export function TimeOffRequestForm({
         />
       </div>
 
-      {error ? (
-        <Typography variant="small" className="text-foreground">
-          {error}
-        </Typography>
-      ) : null}
+      {error ? <FormError message={error} /> : null}
 
       <Button type="submit" disabled={submitting}>
-        {submitting ? 'Submitting…' : 'Request time off'}
+        {submitLabel}
       </Button>
     </form>
   );

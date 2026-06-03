@@ -21,6 +21,7 @@ import { RequestStatusList } from './request-status-list';
 const LOCATION_LABELS: Record<string, string> = {
   us: 'United States',
   de: 'Germany',
+  br: 'Brazil',
 };
 
 type EmployeeTimeOffProps = {

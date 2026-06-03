@@ -1,3 +1,5 @@
+import { Badge } from '@/shared/components';
+
 import type { TimeOffRequestStatus } from '../api/enums';
 import { TimeOffRequestStatus as Status } from '../api/enums';
 
@@ -25,9 +27,5 @@ export function StatusBadge({ status, reverted = false }: StatusBadgeProps) {
   const label = reverted ? REVERTED_LABEL : statusLabel[status];
   const className = reverted ? REVERTED_CLASS : statusClass[status];
 
-  return (
-    <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${className}`}>
-      {label}
-    </span>
-  );
+  return <Badge className={className}>{label}</Badge>;
 }
