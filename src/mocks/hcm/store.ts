@@ -20,7 +20,7 @@ export type FileRequestResult =
 export type DecisionResult =
   | { kind: DecisionResultKind.Success; request: TimeOffRequest; balance: Balance }
   | { kind: DecisionResultKind.NotFound }
-  | { kind: DecisionResultKind.Conflict; request: TimeOffRequest };
+  | { kind: DecisionResultKind.Conflict; request: TimeOffRequest; current?: Balance };
 
 export function cellKey({ employeeId, locationId }: BalanceCell): string {
   return `${employeeId}:${locationId}`;
@@ -169,17 +169,18 @@ export class HcmStore {
     return { kind: WriteResultKind.Success, balance: { ...updated }, request: { ...request } };
   }
 
-  approveRequest(id: string): DecisionResult {
-    return this.decide(id, TimeOffRequestStatus.Approved);
+  approveRequest(id: string, expectedBalanceVersion?: number): DecisionResult {
+    return this.decide(id, TimeOffRequestStatus.Approved, expectedBalanceVersion);
   }
 
-  denyRequest(id: string): DecisionResult {
-    return this.decide(id, TimeOffRequestStatus.Denied);
+  denyRequest(id: string, expectedBalanceVersion?: number): DecisionResult {
+    return this.decide(id, TimeOffRequestStatus.Denied, expectedBalanceVersion);
   }
 
   private decide(
     id: string,
     decision: TimeOffRequestStatus.Approved | TimeOffRequestStatus.Denied,
+    expectedBalanceVersion?: number,
   ): DecisionResult {
     const request = this.requests.get(id);
     if (!request) return { kind: DecisionResultKind.NotFound };
@@ -189,6 +190,9 @@ export class HcmStore {
     const key = cellKey(request);
     const cell = this.balances.get(key);
     if (!cell) return { kind: DecisionResultKind.NotFound };
+    if (expectedBalanceVersion !== undefined && expectedBalanceVersion !== cell.version) {
+      return { kind: DecisionResultKind.Conflict, request: { ...request }, current: { ...cell } };
+    }
 
     const ts = this.nextTimestamp();
     const updatedRequest: TimeOffRequest = { ...request, status: decision, updatedAt: ts };

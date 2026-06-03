@@ -39,11 +39,17 @@ describe('hcm-client', () => {
   });
 
   it('approves and denies requests', async () => {
-    const approved = await approveRequest('r1');
+    const beforeApprove = await fetchBalance({ employeeId: 'e1', locationId: 'us' });
+    const approved = await approveRequest('r1', {
+      expectedBalanceVersion: beforeApprove.version,
+    });
     expect(approved.status).toBe(TimeOffRequestStatus.Approved);
 
     resetHcmStore();
-    const denied = await denyRequest('r1');
+    const beforeDeny = await fetchBalance({ employeeId: 'e1', locationId: 'us' });
+    const denied = await denyRequest('r1', {
+      expectedBalanceVersion: beforeDeny.version,
+    });
     expect(denied.status).toBe(TimeOffRequestStatus.Denied);
   });
 });

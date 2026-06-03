@@ -13,7 +13,16 @@ export function useDenyRequest() {
   const { toast } = useToast();
 
   return useMutation<TimeOffRequest, Error, TimeOffRequest>({
-    mutationFn: (request) => denyRequest(request.id),
+    mutationFn: async (request) => {
+      const cell: BalanceCell = {
+        employeeId: request.employeeId,
+        locationId: request.locationId,
+      };
+      const authoritative = await fetchBalance(cell);
+      return denyRequest(request.id, {
+        expectedBalanceVersion: authoritative.version,
+      });
+    },
 
     onSuccess: async (updated, request) => {
       const cell: BalanceCell = {

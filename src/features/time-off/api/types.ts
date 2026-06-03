@@ -32,3 +32,7 @@ export type FileTimeOffPayload = BalanceCell & {
   days: number;
   expectedVersion: number;
 };
+
+export type DecisionPayload = {
+  expectedBalanceVersion: number;
+};

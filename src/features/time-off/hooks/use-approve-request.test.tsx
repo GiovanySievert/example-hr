@@ -40,6 +40,30 @@ describe('useApproveRequest', () => {
     expect(hcmStore.getRequest('r1')?.status).toBe(TimeOffRequestStatus.Approved);
   });
 
+  it('re-reads the balance before approving instead of trusting a stale cache', async () => {
+    const { Wrapper, queryClient } = createWrapper();
+    queryClient.setQueryData<Balance>(timeOffKeys.balance(REQUEST), {
+      employeeId: 'e1',
+      locationId: 'us',
+      available: 12,
+      pending: 2,
+      version: 1,
+      updatedAt: '2026-06-03T00:00:00.000Z',
+    });
+    hcmStore.applyAnniversaryBonus(REQUEST, 5);
+
+    const { result } = renderHook(() => useApproveRequest(), {
+      wrapper: Wrapper,
+    });
+
+    result.current.mutate(REQUEST);
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const cached = queryClient.getQueryData<Balance>(timeOffKeys.balance(REQUEST));
+    expect(cached?.available).toBe(17);
+    expect(cached?.version).toBe(3);
+  });
+
   it('surfaces an error when the request is no longer pending', async () => {
     hcmStore.approveRequest('r1');
     const { Wrapper } = createWrapper();

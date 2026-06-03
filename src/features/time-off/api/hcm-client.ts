@@ -1,4 +1,11 @@
-import type { Balance, BalanceCell, FileTimeOffPayload, HcmError, TimeOffRequest } from './types';
+import type {
+  Balance,
+  BalanceCell,
+  DecisionPayload,
+  FileTimeOffPayload,
+  HcmError,
+  TimeOffRequest,
+} from './types';
 import { HcmErrorCode } from './enums';
 
 export class HcmRequestError extends Error {
@@ -55,17 +62,21 @@ export async function fetchRequests(): Promise<TimeOffRequest[]> {
   return (await response.json()) as TimeOffRequest[];
 }
 
-export async function approveRequest(id: string): Promise<TimeOffRequest> {
+export async function approveRequest(id: string, payload: DecisionPayload): Promise<TimeOffRequest> {
   const response = await fetch(`/api/hcm/requests/${id}/approve`, {
     method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
   });
   if (!response.ok) return parseError(response);
   return (await response.json()) as TimeOffRequest;
 }
 
-export async function denyRequest(id: string): Promise<TimeOffRequest> {
+export async function denyRequest(id: string, payload: DecisionPayload): Promise<TimeOffRequest> {
   const response = await fetch(`/api/hcm/requests/${id}/deny`, {
     method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
   });
   if (!response.ok) return parseError(response);
   return (await response.json()) as TimeOffRequest;

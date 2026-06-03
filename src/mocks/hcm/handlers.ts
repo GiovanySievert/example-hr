@@ -1,6 +1,11 @@
 import { http, HttpResponse } from 'msw';
 
-import type { Balance, FileTimeOffPayload, HcmError } from '@/features/time-off/api/types';
+import type {
+  Balance,
+  DecisionPayload,
+  FileTimeOffPayload,
+  HcmError,
+} from '@/features/time-off/api/types';
 import { HcmErrorCode } from '@/features/time-off/api/enums';
 
 import { DecisionResultKind, WriteResultKind } from './enums';
@@ -16,7 +21,11 @@ function decisionResponse(result: DecisionResult, conflictMessage: string) {
     case DecisionResultKind.NotFound:
       return hcmError(404, { code: HcmErrorCode.NotFound, message: 'request not found' });
     case DecisionResultKind.Conflict:
-      return hcmError(409, { code: HcmErrorCode.Conflict, message: conflictMessage });
+      return hcmError(409, {
+        code: HcmErrorCode.Conflict,
+        message: conflictMessage,
+        current: result.current,
+      });
     case DecisionResultKind.Success:
       return HttpResponse.json(result.request);
   }
@@ -94,15 +103,17 @@ export const hcmHandlers = [
     return HttpResponse.json(hcmStore.getRequests());
   }),
 
-  http.post('/api/hcm/requests/:id/approve', async ({ params }) => {
+  http.post('/api/hcm/requests/:id/approve', async ({ params, request }) => {
     await cellLatency();
-    const result = hcmStore.approveRequest(String(params.id));
-    return decisionResponse(result, 'request is no longer pending');
+    const body = (await request.json().catch(() => ({}))) as Partial<DecisionPayload>;
+    const result = hcmStore.approveRequest(String(params.id), body.expectedBalanceVersion);
+    return decisionResponse(result, 'balance changed; re-read before deciding');
   }),
 
-  http.post('/api/hcm/requests/:id/deny', async ({ params }) => {
+  http.post('/api/hcm/requests/:id/deny', async ({ params, request }) => {
     await cellLatency();
-    const result = hcmStore.denyRequest(String(params.id));
-    return decisionResponse(result, 'request is no longer pending');
+    const body = (await request.json().catch(() => ({}))) as Partial<DecisionPayload>;
+    const result = hcmStore.denyRequest(String(params.id), body.expectedBalanceVersion);
+    return decisionResponse(result, 'balance changed; re-read before deciding');
   }),
 ];

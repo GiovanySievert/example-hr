@@ -32,6 +32,14 @@ async function fileRequest(body: {
   });
 }
 
+async function decideRequest(id: string, decision: 'approve' | 'deny', expectedBalanceVersion = 1) {
+  return fetch(`/api/hcm/requests/${id}/${decision}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ expectedBalanceVersion }),
+  });
+}
+
 describe('GET /api/hcm/balance (per-cell read)', () => {
   it('returns the authoritative cell', async () => {
     const res = await getBalance('e1', 'us');
@@ -132,9 +140,7 @@ describe('POST /api/hcm/balance (write)', () => {
 
 describe('manager decisions', () => {
   it('approve: clears pending and bumps version', async () => {
-    const res = await fetch('/api/hcm/requests/r1/approve', {
-      method: 'POST',
-    });
+    const res = await decideRequest('r1', 'approve');
     expect(res.status).toBe(200);
     const after = hcmStore.getBalance(CELL)!;
     expect(after.pending).toBe(0);
@@ -143,9 +149,7 @@ describe('manager decisions', () => {
   });
 
   it('deny: returns days to available', async () => {
-    const res = await fetch('/api/hcm/requests/r1/deny', {
-      method: 'POST',
-    });
+    const res = await decideRequest('r1', 'deny');
     expect(res.status).toBe(200);
     const after = hcmStore.getBalance(CELL)!;
     expect(after.available).toBe(14);
@@ -154,17 +158,25 @@ describe('manager decisions', () => {
   });
 
   it('approve on already-decided request → conflict', async () => {
-    await fetch('/api/hcm/requests/r1/approve', { method: 'POST' });
-    const res = await fetch('/api/hcm/requests/r1/approve', {
-      method: 'POST',
-    });
+    await decideRequest('r1', 'approve');
+    const res = await decideRequest('r1', 'approve', 2);
     expect(res.status).toBe(409);
   });
 
+  it('approve with an old balance version → conflict', async () => {
+    hcmStore.applyAnniversaryBonus(CELL, 5);
+
+    const res = await decideRequest('r1', 'approve', 1);
+
+    expect(res.status).toBe(409);
+    const error = (await res.json()) as HcmError;
+    expect(error.code).toBe(HcmErrorCode.Conflict);
+    expect(error.current?.version).toBe(2);
+    expect(hcmStore.getRequest('r1')?.status).toBe(TimeOffRequestStatus.Pending);
+  });
+
   it('approve unknown request → 404', async () => {
-    const res = await fetch('/api/hcm/requests/nope/approve', {
-      method: 'POST',
-    });
+    const res = await decideRequest('nope', 'approve');
     expect(res.status).toBe(404);
   });
 });

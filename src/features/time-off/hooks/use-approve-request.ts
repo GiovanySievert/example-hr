@@ -13,7 +13,16 @@ export function useApproveRequest() {
   const { toast } = useToast();
 
   return useMutation<TimeOffRequest, Error, TimeOffRequest>({
-    mutationFn: (request) => approveRequest(request.id),
+    mutationFn: async (request) => {
+      const cell: BalanceCell = {
+        employeeId: request.employeeId,
+        locationId: request.locationId,
+      };
+      const authoritative = await fetchBalance(cell);
+      return approveRequest(request.id, {
+        expectedBalanceVersion: authoritative.version,
+      });
+    },
 
     onSuccess: async (updated, request) => {
       const cell: BalanceCell = {
