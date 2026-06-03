@@ -43,9 +43,10 @@ src/
     layout.tsx        # envolve a árvore com <Providers>
     providers.tsx     # React Query + Jotai + Devtools (Client Component)
     page.tsx
-  components/
-    button.tsx
-    button.stories.tsx
+  features/           # features por domínio (components / hooks / api)
+  shared/
+    components/       # componentes reutilizáveis entre features
+      button/
   lib/
     query-client.ts   # factory do QueryClient
     store.ts          # átomos Jotai
