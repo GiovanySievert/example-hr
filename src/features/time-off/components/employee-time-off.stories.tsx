@@ -61,6 +61,24 @@ export const Default: Story = {
   },
 };
 
+export const CancelPendingRequest: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(await canvas.findByText('2 day(s) · United States')).toBeInTheDocument();
+    await userEvent.click((await canvas.findAllByRole('button', { name: 'Cancel' }))[0]);
+
+    await expect(
+      await canvas.findByText('Request cancelled', undefined, { timeout: 5000 }),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(canvas.queryByText('2 day(s) · United States')).not.toBeInTheDocument(),
+    );
+    await expect(canvas.getByText('1 day(s) · Germany')).toBeInTheDocument();
+    await waitFor(() => expect(canvas.getByText('14')).toBeInTheDocument());
+  },
+};
+
 export const Loading: Story = {
   parameters: {
     msw: {

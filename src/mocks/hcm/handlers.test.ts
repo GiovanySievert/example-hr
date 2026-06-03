@@ -32,7 +32,11 @@ async function fileRequest(body: {
   });
 }
 
-async function decideRequest(id: string, decision: 'approve' | 'deny', expectedBalanceVersion = 1) {
+async function decideRequest(
+  id: string,
+  decision: 'approve' | 'deny' | 'cancel',
+  expectedBalanceVersion = 1,
+) {
   return fetch(`/api/hcm/requests/${id}/${decision}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -165,6 +169,15 @@ describe('manager decisions', () => {
     expect(after.available).toBe(14);
     expect(after.pending).toBe(0);
     expect(hcmStore.getRequest('r1')?.status).toBe(TimeOffRequestStatus.Denied);
+  });
+
+  it('cancel: returns days to available and marks the request cancelled', async () => {
+    const res = await decideRequest('r1', 'cancel');
+    expect(res.status).toBe(200);
+    const after = hcmStore.getBalance(CELL)!;
+    expect(after.available).toBe(14);
+    expect(after.pending).toBe(0);
+    expect(hcmStore.getRequest('r1')?.status).toBe(TimeOffRequestStatus.Cancelled);
   });
 
   it('approve on already-decided request → conflict', async () => {

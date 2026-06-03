@@ -10,6 +10,7 @@ import { cellKey } from '../api/cell-key';
 import type { Balance } from '../api/types';
 import { BalanceCardStatus } from '../api/enums';
 import { useBalances } from '../hooks/use-balances';
+import { useCancelRequest } from '../hooks/use-cancel-request';
 import { useFileTimeOff } from '../hooks/use-file-time-off';
 import { usePendingRequests } from '../hooks/use-pending-requests';
 import { useReconcile } from '../hooks/use-reconcile';
@@ -39,6 +40,7 @@ export function EmployeeTimeOff({ employeeId, reconcileIntervalMs }: EmployeeTim
   const balancesQuery = useBalances();
   const requestsQuery = usePendingRequests();
   const fileTimeOff = useFileTimeOff();
+  const cancelRequest = useCancelRequest();
 
   const inFlight = useAtomValue(inFlightCellsAtom);
   const refreshed = useAtomValue(refreshedCellsAtom);
@@ -107,7 +109,12 @@ export function EmployeeTimeOff({ employeeId, reconcileIntervalMs }: EmployeeTim
           submitting={fileTimeOff.isPending}
           onSubmit={({ locationId, days }) => fileTimeOff.mutate({ employeeId, locationId, days })}
         />
-        <RequestStatusList requests={requests} locationLabels={LOCATION_LABELS} />
+        <RequestStatusList
+          requests={requests}
+          locationLabels={LOCATION_LABELS}
+          cancellingRequestId={cancelRequest.isPending ? cancelRequest.variables?.id : undefined}
+          onCancelRequest={(request) => cancelRequest.mutate(request)}
+        />
       </section>
     </div>
   );

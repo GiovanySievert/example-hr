@@ -10,12 +10,14 @@ const statusLabel: Record<TimeOffRequestStatus, string> = {
   [Status.Pending]: 'Pending',
   [Status.Approved]: 'Approved',
   [Status.Denied]: 'Denied',
+  [Status.Cancelled]: 'Cancelled',
 };
 
 const statusClass: Record<TimeOffRequestStatus, string> = {
   [Status.Pending]: 'border-border bg-secondary text-muted',
   [Status.Approved]: 'border-primary bg-primary text-primary-foreground',
   [Status.Denied]: 'border-border bg-secondary text-secondary-foreground',
+  [Status.Cancelled]: 'border-border bg-secondary text-secondary-foreground',
 };
 
 type StatusBadgeProps = {

@@ -12,6 +12,8 @@ export type RequestListItem = TimeOffRequest & {
 type RequestStatusListProps = {
   requests: RequestListItem[];
   locationLabels?: Record<string, string>;
+  cancellingRequestId?: string;
+  onCancelRequest?: (request: TimeOffRequest) => void;
 };
 
 function EmptyRequests() {
@@ -24,7 +26,12 @@ function EmptyRequests() {
   );
 }
 
-export function RequestStatusList({ requests, locationLabels }: RequestStatusListProps) {
+export function RequestStatusList({
+  requests,
+  locationLabels,
+  cancellingRequestId,
+  onCancelRequest,
+}: RequestStatusListProps) {
   if (requests.length === 0) {
     return <EmptyRequests />;
   }
@@ -40,6 +47,8 @@ export function RequestStatusList({ requests, locationLabels }: RequestStatusLis
             key={request.id}
             request={request}
             locationLabel={locationLabels?.[request.locationId] ?? request.locationId.toUpperCase()}
+            cancelling={cancellingRequestId === request.id}
+            onCancel={onCancelRequest ? () => onCancelRequest(request) : undefined}
           />
         ))}
       </CardContent>

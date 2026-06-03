@@ -81,3 +81,13 @@ export async function denyRequest(id: string, payload: DecisionPayload): Promise
   if (!response.ok) return parseError(response);
   return (await response.json()) as TimeOffRequest;
 }
+
+export async function cancelRequest(id: string, payload: DecisionPayload): Promise<TimeOffRequest> {
+  const response = await fetch(`/api/hcm/requests/${id}/cancel`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) return parseError(response);
+  return (await response.json()) as TimeOffRequest;
+}

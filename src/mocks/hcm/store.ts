@@ -188,9 +188,16 @@ export class HcmStore {
     return this.decide(id, TimeOffRequestStatus.Denied, expectedBalanceVersion);
   }
 
+  cancelRequest(id: string, expectedBalanceVersion?: number): DecisionResult {
+    return this.decide(id, TimeOffRequestStatus.Cancelled, expectedBalanceVersion);
+  }
+
   private decide(
     id: string,
-    decision: TimeOffRequestStatus.Approved | TimeOffRequestStatus.Denied,
+    decision:
+      | TimeOffRequestStatus.Approved
+      | TimeOffRequestStatus.Denied
+      | TimeOffRequestStatus.Cancelled,
     expectedBalanceVersion?: number,
   ): DecisionResult {
     const request = this.requests.get(id);

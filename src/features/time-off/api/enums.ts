@@ -2,6 +2,7 @@ export enum TimeOffRequestStatus {
   Pending = 'pending',
   Approved = 'approved',
   Denied = 'denied',
+  Cancelled = 'cancelled',
 }
 
 export enum HcmErrorCode {

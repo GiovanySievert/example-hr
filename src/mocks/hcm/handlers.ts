@@ -116,4 +116,11 @@ export const hcmHandlers = [
     const result = hcmStore.denyRequest(String(params.id), body.expectedBalanceVersion);
     return decisionResponse(result, 'balance changed; re-read before deciding');
   }),
+
+  http.post('/api/hcm/requests/:id/cancel', async ({ params, request }) => {
+    await cellLatency();
+    const body = (await request.json().catch(() => ({}))) as Partial<DecisionPayload>;
+    const result = hcmStore.cancelRequest(String(params.id), body.expectedBalanceVersion);
+    return decisionResponse(result, 'balance changed; re-read before cancelling');
+  }),
 ];

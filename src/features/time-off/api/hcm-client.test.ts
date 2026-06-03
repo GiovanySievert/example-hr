@@ -5,6 +5,7 @@ import { resetHcmStore, setLatencyEnabled } from '@/mocks/hcm';
 import { HcmErrorCode, TimeOffRequestStatus } from './enums';
 import {
   approveRequest,
+  cancelRequest,
   denyRequest,
   fetchBalance,
   fileTimeOff,
@@ -51,5 +52,12 @@ describe('hcm-client', () => {
       expectedBalanceVersion: beforeDeny.version,
     });
     expect(denied.status).toBe(TimeOffRequestStatus.Denied);
+
+    resetHcmStore();
+    const beforeCancel = await fetchBalance({ employeeId: 'e1', locationId: 'us' });
+    const cancelled = await cancelRequest('r1', {
+      expectedBalanceVersion: beforeCancel.version,
+    });
+    expect(cancelled.status).toBe(TimeOffRequestStatus.Cancelled);
   });
 });
