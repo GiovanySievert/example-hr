@@ -15,3 +15,8 @@ export { useReconcile } from './hooks/use-reconcile';
 export { usePendingRequests } from './hooks/use-pending-requests';
 export { useApproveRequest } from './hooks/use-approve-request';
 export { useDenyRequest } from './hooks/use-deny-request';
+
+export { BalanceCard } from './components/balance-card';
+export { TimeOffRequestForm } from './components/time-off-request-form';
+export { RequestStatusList } from './components/request-status-list';
+export { EmployeeTimeOff } from './components/employee-time-off';
