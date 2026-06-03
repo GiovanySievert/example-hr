@@ -20,3 +20,5 @@ export { BalanceCard } from './components/balance-card';
 export { TimeOffRequestForm } from './components/time-off-request-form';
 export { RequestStatusList } from './components/request-status-list';
 export { EmployeeTimeOff } from './components/employee-time-off';
+export { PendingApprovalList } from './components/pending-approval-list';
+export { ManagerApprovals } from './components/manager-approvals';
