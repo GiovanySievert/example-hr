@@ -113,13 +113,15 @@ hcm.bonus('e1', 'de', 3); // bonus on a specific cell/amount
 hcm.failNext('insufficient-balance'); // next file request on e1/us is rejected
 hcm.failNext('conflict'); // next write conflicts (version moved)
 hcm.failNext('silent-wrong'); // next write returns 200 but a wrong balance
+hcm.failNext('silent-wrong-pending-mismatch'); // 200 with incoherent available/pending movement
 hcm.reset(); // reset the mock to its default seed
 ```
 
 To see the **anniversary bonus mid-session**: open `/time-off`, run `hcm.bonus()`, and within a
 few seconds the US balance updates and the card shows a **Refreshed** badge. To see **honest
 recovery**: run `hcm.failNext('silent-wrong')`, then file a request — the optimistic change is
-reverted and a toast explains why.
+reconciled to the authoritative HCM value, a **Reverted** row appears in the request list, and a
+toast explains why.
 
 ### Layout
 

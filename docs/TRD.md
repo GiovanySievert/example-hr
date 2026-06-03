@@ -83,14 +83,14 @@ then verify against the SoT, and recover _honestly_ when the SoT disagrees.
 
 1. **onMutate** — snapshot the current cell, apply the optimistic delta (`available -= days`,
    `pending += days`), mark the cell as **in-flight** (Jotai), cancel outgoing cell queries.
-2. **onError** — roll the cell back to the snapshot, toast the reason (conflict /
-   insufficient / network).
+2. **onError** — roll the cell back to the snapshot, add a local `Reverted` request row,
+   and toast the reason (conflict / insufficient / network).
 3. **onSuccess** — perform an **authoritative per-cell re-read** (C2). Then **detect
    silent-wrong** (C4): if the re-read contradicts what a coherent success should look like
-   (e.g. the server claims success but the authoritative balance didn't move, or moved
-   incoherently), treat it as a **recoverable failure** — roll the optimistic state back to
-   the authoritative value and toast an explanation. This is the honest-recovery path: we
-   never leave the user believing a state the SoT contradicts.
+   (e.g. the server claims success but `available`, `pending`, or `version` did not move
+   coherently), treat it as a **recoverable failure** — reconcile to the authoritative value,
+   add a local `Reverted` request row, and toast an explanation. This is the honest-recovery
+   path: we never leave the user believing a state the SoT contradicts.
 4. **onSettled** — clear the in-flight mark for the cell.
 
 ### Background reconcile = periodic corpus refetch that respects in-flight work
@@ -108,7 +108,8 @@ then verify against the SoT, and recover _honestly_ when the SoT disagrees.
 ### Manager path
 
 - Opening / acting on a request triggers an **authoritative re-read of the relevant cell**
-  (C2), so the decision is made against the balance valid _at that moment_.
+  (C2). Approve/deny sends that cell's `expectedBalanceVersion`, and the mock HCM rejects the
+  decision if the balance version changed before the decision is applied.
 - Approve/deny is blocked when the cell is obviously stale (version moved since the queue was
   loaded) — the manager is asked to re-read before deciding, preventing a decision on a value
   the SoT has already changed.
@@ -161,17 +162,17 @@ When the corpus reconcile lands while a user action is mid-flight, who wins?
   TimeOffPage
     BalanceCard / BalanceCell      → C2/C6: per-cell authoritative balance, stale/refreshed badge
     TimeOffRequestForm             → write path: location + days, client-side validation
-    RequestStatusList              → honest status; recoverable rollback item, never approved→denied
+    RequestStatusList              → honest status; real rollback item, never approved→denied
 
 (manager)/approvals                         Manager view
   ApprovalsPage
     PendingRequestList
-      PendingRequestRow            → C2: balance context re-read at decision time
+      PendingRequestRow            → C2: balance context re-read + expected version at decision time
         approve / deny             → blocked on obviously-stale cell (C1/C5)
 ```
 
-Shared UI ephemeral state (set of in-flight cells, stale/refreshed banners) lives in **Jotai**;
-all server state lives in **React Query**.
+Shared UI ephemeral state (set of in-flight cells, stale/refreshed banners, local rolled-back
+request rows) lives in **Jotai**; all server state lives in **React Query**.
 
 ## 6. Test strategy
 
@@ -181,8 +182,9 @@ What each layer protects, and why:
   _contract and the branches_: success, conflict, insufficient-balance, silent-wrong, variable
   latency, and bonus-applied. If these drift, every layer above is testing a fiction.
 - **Hook tests (`renderHook` + MSW)** — protect the _reconciliation logic_: optimistic apply,
-  rollback on conflict/insufficient, silent-wrong detection on the success path, and reconcile
-  that respects an in-flight mutation. This is where the hard decisions in §4 are enforced.
+  rollback on conflict/insufficient, silent-wrong detection on the success path, manager version
+  validation, and reconcile that respects an in-flight mutation. This is where the hard decisions
+  in §4 are enforced.
 - **Storybook component stories** — protect _every visual state_ in isolation, including the
   uncomfortable ones (rolled-back, hcm-rejected, silently-wrong, refreshed-mid-session).
 - **Storybook interaction tests (play functions, addon-vitest)** — protect the _user-visible
@@ -199,7 +201,3 @@ Manager view: `empty`, `pending-balance-ok`, `pending-balance-insufficient`,
 
 Coverage is gated on the data-layer hooks and the mock HCM branches (FASE 5); the report is
 documented in the README.
-
-```
-
-```
