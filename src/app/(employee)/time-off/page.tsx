@@ -1,4 +1,4 @@
-import { EmployeeTimeOff } from '@/features/time-off';
+import { EmployeeTimeOffShell } from '@/features/time-off';
 import { LinkButton, Typography } from '@/shared/components';
 
 export default function TimeOffPage() {
@@ -13,7 +13,7 @@ export default function TimeOffPage() {
           Your balances are presented by ExampleHR; the HCM remains the source of truth.
         </Typography>
       </header>
-      <EmployeeTimeOff employeeId="e1" />
+      <EmployeeTimeOffShell />
     </main>
   );
 }
