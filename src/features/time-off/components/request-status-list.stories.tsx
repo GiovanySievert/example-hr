@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 
+import { TimeOffRequestStatus } from '../api/enums';
 import { RequestStatusList } from './request-status-list';
 
 const base = {
@@ -28,15 +29,17 @@ export const Empty: Story = {
 export const Mixed: Story = {
   args: {
     requests: [
-      { ...base, id: 'r1', days: 2, status: 'pending' },
-      { ...base, id: 'r2', days: 1, status: 'approved' },
-      { ...base, id: 'r3', days: 3, status: 'denied', locationId: 'de' },
+      { ...base, id: 'r1', days: 2, status: TimeOffRequestStatus.Pending },
+      { ...base, id: 'r2', days: 1, status: TimeOffRequestStatus.Approved },
+      { ...base, id: 'r3', days: 3, status: TimeOffRequestStatus.Denied, locationId: 'de' },
     ],
   },
 };
 
 export const OptimisticRolledBack: Story = {
   args: {
-    requests: [{ ...base, id: 'r1', days: 2, status: 'pending', reverted: true }],
+    requests: [
+      { ...base, id: 'r1', days: 2, status: TimeOffRequestStatus.Pending, reverted: true },
+    ],
   },
 };

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { resetHcmStore, setLatencyEnabled } from '@/mocks/hcm';
 
+import { TimeOffRequestStatus } from '../api/enums';
 import { useBalance } from './use-balance';
 import { useBalances } from './use-balances';
 import { usePendingRequests } from './use-pending-requests';
@@ -36,6 +37,6 @@ describe('balance query hooks', () => {
       wrapper: Wrapper,
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data?.every((r) => r.status === 'pending')).toBe(true);
+    expect(result.current.data?.every((r) => r.status === TimeOffRequestStatus.Pending)).toBe(true);
   });
 });

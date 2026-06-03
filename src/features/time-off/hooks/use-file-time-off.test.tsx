@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { hcmStore, resetHcmStore, setLatencyEnabled } from '@/mocks/hcm';
+import { hcmStore, resetHcmStore, setLatencyEnabled, WriteBehavior } from '@/mocks/hcm';
 
 import { fetchBalance } from '../api/hcm-client';
 import { timeOffKeys } from '../api/query-keys';
@@ -42,7 +42,7 @@ describe('useFileTimeOff', () => {
   it('rolls back to the authoritative cell on conflict', async () => {
     const { Wrapper, queryClient } = createWrapper();
     const before = await seedCellCache(queryClient);
-    hcmStore.setNextWriteBehavior(CELL, 'conflict');
+    hcmStore.setNextWriteBehavior(CELL, WriteBehavior.Conflict);
 
     const { result } = renderHook(() => useFileTimeOff(), { wrapper: Wrapper });
     result.current.mutate({ ...CELL, days: 1 });
@@ -57,7 +57,7 @@ describe('useFileTimeOff', () => {
   it('rolls back on insufficient-balance', async () => {
     const { Wrapper, queryClient } = createWrapper();
     const before = await seedCellCache(queryClient);
-    hcmStore.setNextWriteBehavior(CELL, 'insufficient-balance');
+    hcmStore.setNextWriteBehavior(CELL, WriteBehavior.InsufficientBalance);
 
     const { result } = renderHook(() => useFileTimeOff(), { wrapper: Wrapper });
     result.current.mutate({ ...CELL, days: 1 });
@@ -71,7 +71,7 @@ describe('useFileTimeOff', () => {
   it('detects silent-wrong: success response but authoritative re-read contradicts, reverts', async () => {
     const { Wrapper, queryClient } = createWrapper();
     const before = await seedCellCache(queryClient);
-    hcmStore.setNextWriteBehavior(CELL, 'silent-wrong');
+    hcmStore.setNextWriteBehavior(CELL, WriteBehavior.SilentWrong);
 
     const { result } = renderHook(() => useFileTimeOff(), { wrapper: Wrapper });
     result.current.mutate({ ...CELL, days: 3 });

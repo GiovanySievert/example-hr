@@ -1,12 +1,26 @@
 import type { Balance, BalanceCell, TimeOffRequest } from '@/features/time-off/api/types';
+import { TimeOffRequestStatus } from '@/features/time-off/api/enums';
 
-export type WriteBehavior = 'success' | 'conflict' | 'insufficient-balance' | 'silent-wrong';
+import { DecisionResultKind, WriteBehavior, WriteResultKind } from './enums';
 
 type Seed = {
   balances: Balance[];
   requests: TimeOffRequest[];
   nextWriteBehavior?: Record<string, WriteBehavior>;
 };
+
+export type FileRequestResult =
+  | { kind: WriteResultKind.Success; balance: Balance; request: TimeOffRequest }
+  | { kind: WriteResultKind.SilentWrong; balance: Balance }
+  | { kind: WriteResultKind.Conflict; current: Balance }
+  | { kind: WriteResultKind.InsufficientBalance; current: Balance }
+  | { kind: WriteResultKind.NotFound }
+  | { kind: WriteResultKind.InvalidRequest };
+
+export type DecisionResult =
+  | { kind: DecisionResultKind.Success; request: TimeOffRequest; balance: Balance }
+  | { kind: DecisionResultKind.NotFound }
+  | { kind: DecisionResultKind.Conflict; request: TimeOffRequest };
 
 export function cellKey({ employeeId, locationId }: BalanceCell): string {
   return `${employeeId}:${locationId}`;
@@ -48,7 +62,7 @@ export function defaultSeed(): Seed {
         employeeId: 'e1',
         locationId: 'us',
         days: 2,
-        status: 'pending',
+        status: TimeOffRequestStatus.Pending,
         createdAt: FIXED_NOW,
         updatedAt: FIXED_NOW,
       },
@@ -105,33 +119,27 @@ export class HcmStore {
     locationId: string;
     days: number;
     expectedVersion: number;
-  }):
-    | { kind: 'success'; balance: Balance; request: TimeOffRequest }
-    | { kind: 'silent-wrong'; balance: Balance }
-    | { kind: 'conflict'; current: Balance }
-    | { kind: 'insufficient-balance'; current: Balance }
-    | { kind: 'not-found' }
-    | { kind: 'invalid-request' } {
+  }): FileRequestResult {
     const key = cellKey(args);
     const cell = this.balances.get(key);
-    if (!cell) return { kind: 'not-found' };
+    if (!cell) return { kind: WriteResultKind.NotFound };
     if (!Number.isInteger(args.days) || args.days <= 0) {
-      return { kind: 'invalid-request' };
+      return { kind: WriteResultKind.InvalidRequest };
     }
 
     const injected = this.nextWriteBehavior.get(key);
     if (injected) this.nextWriteBehavior.delete(key);
 
-    if (injected === 'conflict' || args.expectedVersion !== cell.version) {
-      return { kind: 'conflict', current: { ...cell } };
+    if (injected === WriteBehavior.Conflict || args.expectedVersion !== cell.version) {
+      return { kind: WriteResultKind.Conflict, current: { ...cell } };
     }
 
-    if (injected === 'insufficient-balance' || args.days > cell.available) {
-      return { kind: 'insufficient-balance', current: { ...cell } };
+    if (injected === WriteBehavior.InsufficientBalance || args.days > cell.available) {
+      return { kind: WriteResultKind.InsufficientBalance, current: { ...cell } };
     }
 
-    if (injected === 'silent-wrong') {
-      return { kind: 'silent-wrong', balance: { ...cell } };
+    if (injected === WriteBehavior.SilentWrong) {
+      return { kind: WriteResultKind.SilentWrong, balance: { ...cell } };
     }
 
     const updated: Balance = {
@@ -148,83 +156,52 @@ export class HcmStore {
       employeeId: args.employeeId,
       locationId: args.locationId,
       days: args.days,
-      status: 'pending',
+      status: TimeOffRequestStatus.Pending,
       createdAt: updated.updatedAt,
       updatedAt: updated.updatedAt,
     };
     this.requests.set(request.id, request);
 
-    return { kind: 'success', balance: { ...updated }, request: { ...request } };
+    return { kind: WriteResultKind.Success, balance: { ...updated }, request: { ...request } };
   }
 
-  approveRequest(
+  approveRequest(id: string): DecisionResult {
+    return this.decide(id, TimeOffRequestStatus.Approved);
+  }
+
+  denyRequest(id: string): DecisionResult {
+    return this.decide(id, TimeOffRequestStatus.Denied);
+  }
+
+  private decide(
     id: string,
-  ):
-    | { kind: 'success'; request: TimeOffRequest; balance: Balance }
-    | { kind: 'not-found' }
-    | { kind: 'conflict'; request: TimeOffRequest } {
+    decision: TimeOffRequestStatus.Approved | TimeOffRequestStatus.Denied,
+  ): DecisionResult {
     const request = this.requests.get(id);
-    if (!request) return { kind: 'not-found' };
-    if (request.status !== 'pending') {
-      return { kind: 'conflict', request: { ...request } };
+    if (!request) return { kind: DecisionResultKind.NotFound };
+    if (request.status !== TimeOffRequestStatus.Pending) {
+      return { kind: DecisionResultKind.Conflict, request: { ...request } };
     }
     const key = cellKey(request);
     const cell = this.balances.get(key);
-    if (!cell) return { kind: 'not-found' };
+    if (!cell) return { kind: DecisionResultKind.NotFound };
 
     const ts = this.nextTimestamp();
-    const updatedRequest: TimeOffRequest = {
-      ...request,
-      status: 'approved',
-      updatedAt: ts,
-    };
+    const updatedRequest: TimeOffRequest = { ...request, status: decision, updatedAt: ts };
+
+    const approved = decision === TimeOffRequestStatus.Approved;
     const updatedBalance: Balance = {
       ...cell,
+      available: approved ? cell.available : cell.available + request.days,
       pending: Math.max(0, cell.pending - request.days),
       version: cell.version + 1,
       updatedAt: ts,
     };
+
     this.requests.set(id, updatedRequest);
     this.balances.set(key, updatedBalance);
     return {
-      kind: 'success',
-      request: { ...updatedRequest },
-      balance: { ...updatedBalance },
-    };
-  }
-
-  denyRequest(
-    id: string,
-  ):
-    | { kind: 'success'; request: TimeOffRequest; balance: Balance }
-    | { kind: 'not-found' }
-    | { kind: 'conflict'; request: TimeOffRequest } {
-    const request = this.requests.get(id);
-    if (!request) return { kind: 'not-found' };
-    if (request.status !== 'pending') {
-      return { kind: 'conflict', request: { ...request } };
-    }
-    const key = cellKey(request);
-    const cell = this.balances.get(key);
-    if (!cell) return { kind: 'not-found' };
-
-    const ts = this.nextTimestamp();
-    const updatedRequest: TimeOffRequest = {
-      ...request,
-      status: 'denied',
-      updatedAt: ts,
-    };
-    const updatedBalance: Balance = {
-      ...cell,
-      available: cell.available + request.days,
-      pending: Math.max(0, cell.pending - request.days),
-      version: cell.version + 1,
-      updatedAt: ts,
-    };
-    this.requests.set(id, updatedRequest);
-    this.balances.set(key, updatedBalance);
-    return {
-      kind: 'success',
+      kind: DecisionResultKind.Success,
       request: { ...updatedRequest },
       balance: { ...updatedBalance },
     };

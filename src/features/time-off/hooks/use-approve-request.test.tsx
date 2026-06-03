@@ -5,6 +5,7 @@ import { hcmStore, resetHcmStore, setLatencyEnabled } from '@/mocks/hcm';
 
 import { timeOffKeys } from '../api/query-keys';
 import type { Balance, TimeOffRequest } from '../api/types';
+import { TimeOffRequestStatus } from '../api/enums';
 import { useApproveRequest } from './use-approve-request';
 import { useDenyRequest } from './use-deny-request';
 import { createWrapper } from './test-utils';
@@ -14,7 +15,7 @@ const REQUEST: TimeOffRequest = {
   employeeId: 'e1',
   locationId: 'us',
   days: 2,
-  status: 'pending',
+  status: TimeOffRequestStatus.Pending,
   createdAt: '2026-06-03T00:00:00.000Z',
   updatedAt: '2026-06-03T00:00:00.000Z',
 };
@@ -36,7 +37,7 @@ describe('useApproveRequest', () => {
 
     const cached = queryClient.getQueryData<Balance>(timeOffKeys.balance(REQUEST));
     expect(cached?.pending).toBe(0);
-    expect(hcmStore.getRequest('r1')?.status).toBe('approved');
+    expect(hcmStore.getRequest('r1')?.status).toBe(TimeOffRequestStatus.Approved);
   });
 
   it('surfaces an error when the request is no longer pending', async () => {
@@ -61,6 +62,6 @@ describe('useDenyRequest', () => {
 
     const cached = queryClient.getQueryData<Balance>(timeOffKeys.balance(REQUEST));
     expect(cached?.available).toBe(14);
-    expect(hcmStore.getRequest('r1')?.status).toBe('denied');
+    expect(hcmStore.getRequest('r1')?.status).toBe(TimeOffRequestStatus.Denied);
   });
 });

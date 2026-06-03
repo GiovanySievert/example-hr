@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 
+import { BalanceCardStatus } from '../api/enums';
 import { BalanceCard } from './balance-card';
 
 const balance = {
@@ -27,18 +28,18 @@ export const Idle: Story = {};
 
 export const OptimisticPending: Story = {
   args: {
-    status: 'optimistic',
+    status: BalanceCardStatus.Optimistic,
     balance: { ...balance, available: 9, pending: 3 },
   },
 };
 
 export const Stale: Story = {
-  args: { status: 'stale' },
+  args: { status: BalanceCardStatus.Stale },
 };
 
 export const Refreshed: Story = {
   args: {
-    status: 'refreshed',
+    status: BalanceCardStatus.Refreshed,
     balance: { ...balance, available: 17, version: 2 },
   },
 };

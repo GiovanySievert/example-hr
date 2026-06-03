@@ -8,12 +8,13 @@ import { Typography } from '@/shared/components';
 
 import { cellKey } from '../api/cell-key';
 import type { Balance } from '../api/types';
+import { BalanceCardStatus } from '../api/enums';
 import { useBalances } from '../hooks/use-balances';
 import { useFileTimeOff } from '../hooks/use-file-time-off';
 import { usePendingRequests } from '../hooks/use-pending-requests';
 import { useReconcile } from '../hooks/use-reconcile';
 import { acknowledgeCellRefreshedAtom, inFlightCellsAtom, refreshedCellsAtom } from '../state';
-import { BalanceCard, type BalanceCardStatus } from './balance-card';
+import { BalanceCard } from './balance-card';
 import { TimeOffRequestForm, type LocationOption } from './time-off-request-form';
 import { RequestStatusList } from './request-status-list';
 
@@ -53,9 +54,9 @@ export function EmployeeTimeOff({ employeeId, reconcileIntervalMs }: EmployeeTim
 
   function statusFor(cell: Balance): BalanceCardStatus {
     const key = cellKey(cell);
-    if (inFlight.has(key)) return 'optimistic';
-    if (refreshed.has(key)) return 'refreshed';
-    return 'idle';
+    if (inFlight.has(key)) return BalanceCardStatus.Optimistic;
+    if (refreshed.has(key)) return BalanceCardStatus.Refreshed;
+    return BalanceCardStatus.Idle;
   }
 
   if (balancesQuery.isLoading) {

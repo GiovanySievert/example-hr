@@ -2,7 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle, Typography } from '@/shared/components';
 
-import type { TimeOffRequest, TimeOffRequestStatus } from '../api/types';
+import type { TimeOffRequest } from '../api/types';
+import { TimeOffRequestStatus } from '../api/enums';
 
 export type RequestListItem = TimeOffRequest & {
   reverted?: boolean;
@@ -14,15 +15,15 @@ type RequestStatusListProps = {
 };
 
 const statusLabel: Record<TimeOffRequestStatus, string> = {
-  pending: 'Pending',
-  approved: 'Approved',
-  denied: 'Denied',
+  [TimeOffRequestStatus.Pending]: 'Pending',
+  [TimeOffRequestStatus.Approved]: 'Approved',
+  [TimeOffRequestStatus.Denied]: 'Denied',
 };
 
 const statusClass: Record<TimeOffRequestStatus, string> = {
-  pending: 'border-border bg-secondary text-muted',
-  approved: 'border-primary bg-primary text-primary-foreground',
-  denied: 'border-border bg-secondary text-secondary-foreground',
+  [TimeOffRequestStatus.Pending]: 'border-border bg-secondary text-muted',
+  [TimeOffRequestStatus.Approved]: 'border-primary bg-primary text-primary-foreground',
+  [TimeOffRequestStatus.Denied]: 'border-border bg-secondary text-secondary-foreground',
 };
 
 export function RequestStatusList({ requests, locationLabels }: RequestStatusListProps) {

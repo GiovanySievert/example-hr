@@ -3,8 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle, Typography } from '@/shared/components';
 
 import type { Balance } from '../api/types';
-
-export type BalanceCardStatus = 'idle' | 'optimistic' | 'stale' | 'refreshed';
+import { BalanceCardStatus } from '../api/enums';
 
 type BalanceCardProps = {
   balance: Balance;
@@ -14,18 +13,18 @@ type BalanceCardProps = {
 };
 
 const statusBadge: Record<
-  Exclude<BalanceCardStatus, 'idle'>,
+  Exclude<BalanceCardStatus, BalanceCardStatus.Idle>,
   { label: string; className: string }
 > = {
-  optimistic: {
+  [BalanceCardStatus.Optimistic]: {
     label: 'Saving…',
     className: 'border-border bg-secondary text-muted',
   },
-  stale: {
+  [BalanceCardStatus.Stale]: {
     label: 'Stale',
     className: 'border-border bg-secondary text-muted',
   },
-  refreshed: {
+  [BalanceCardStatus.Refreshed]: {
     label: 'Refreshed',
     className: 'border-primary bg-primary text-primary-foreground',
   },
@@ -34,10 +33,10 @@ const statusBadge: Record<
 export function BalanceCard({
   balance,
   locationLabel,
-  status = 'idle',
+  status = BalanceCardStatus.Idle,
   onAcknowledgeRefreshed,
 }: BalanceCardProps) {
-  const badge = status === 'idle' ? null : statusBadge[status];
+  const badge = status === BalanceCardStatus.Idle ? null : statusBadge[status];
 
   return (
     <Card className="w-full max-w-sm">
@@ -47,7 +46,7 @@ export function BalanceCard({
           <button
             type="button"
             onClick={onAcknowledgeRefreshed}
-            disabled={status !== 'refreshed'}
+            disabled={status !== BalanceCardStatus.Refreshed}
             className={`rounded-full border px-2 py-0.5 text-xs font-medium ${badge.className}`}
           >
             {badge.label}

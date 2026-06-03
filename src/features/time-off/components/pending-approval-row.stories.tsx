@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { fn } from 'storybook/test';
 
+import { TimeOffRequestStatus } from '../api/enums';
 import { PendingApprovalRow } from './pending-approval-row';
 
 const request = {
@@ -8,7 +9,7 @@ const request = {
   employeeId: 'e1',
   locationId: 'us',
   days: 2,
-  status: 'pending' as const,
+  status: TimeOffRequestStatus.Pending,
   createdAt: '2026-06-03T00:00:00.000Z',
   updatedAt: '2026-06-03T00:00:00.000Z',
 };

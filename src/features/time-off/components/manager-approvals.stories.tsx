@@ -7,6 +7,7 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Toaster } from '@/shared/components/toast';
 import { hcmStore, resetHcmStore, setLatencyEnabled } from '@/mocks/hcm';
 
+import { TimeOffRequestStatus } from '../api/enums';
 import { ManagerApprovals } from './manager-approvals';
 
 function withProviders(Story: () => React.ReactElement) {
@@ -120,7 +121,7 @@ export const PendingBalanceInsufficient: Story = {
           employeeId: 'e1',
           locationId: 'us',
           days: 5,
-          status: 'pending',
+          status: TimeOffRequestStatus.Pending,
           createdAt: NOW,
           updatedAt: NOW,
         },

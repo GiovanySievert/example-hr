@@ -1,10 +1,4 @@
 export { hcmHandlers } from './handlers';
-export {
-  hcmStore,
-  resetHcmStore,
-  defaultSeed,
-  cellKey,
-  HcmStore,
-  type WriteBehavior,
-} from './store';
+export { hcmStore, resetHcmStore, defaultSeed, cellKey, HcmStore } from './store';
+export { WriteBehavior, WriteResultKind, DecisionResultKind } from './enums';
 export { setLatencyEnabled } from './latency';

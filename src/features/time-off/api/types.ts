@@ -1,3 +1,5 @@
+import type { HcmErrorCode, TimeOffRequestStatus } from './enums';
+
 export type BalanceCell = {
   employeeId: string;
   locationId: string;
@@ -10,8 +12,6 @@ export type Balance = BalanceCell & {
   updatedAt: string;
 };
 
-export type TimeOffRequestStatus = 'pending' | 'approved' | 'denied';
-
 export type TimeOffRequest = {
   id: string;
   employeeId: string;
@@ -21,8 +21,6 @@ export type TimeOffRequest = {
   createdAt: string;
   updatedAt: string;
 };
-
-export type HcmErrorCode = 'conflict' | 'insufficient-balance' | 'not-found' | 'invalid-request';
 
 export type HcmError = {
   code: HcmErrorCode;

@@ -2,11 +2,10 @@ export type {
   Balance,
   BalanceCell,
   TimeOffRequest,
-  TimeOffRequestStatus,
   HcmError,
-  HcmErrorCode,
   FileTimeOffPayload,
 } from './api/types';
+export { TimeOffRequestStatus, HcmErrorCode, BalanceCardStatus } from './api/enums';
 
 export { useBalance } from './hooks/use-balance';
 export { useBalances } from './hooks/use-balances';

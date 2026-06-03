@@ -1,12 +1,25 @@
 import { http, HttpResponse } from 'msw';
 
 import type { Balance, FileTimeOffPayload, HcmError } from '@/features/time-off/api/types';
+import { HcmErrorCode } from '@/features/time-off/api/enums';
 
+import { DecisionResultKind, WriteResultKind } from './enums';
 import { cellLatency, corpusLatency } from './latency';
-import { hcmStore } from './store';
+import { hcmStore, type DecisionResult } from './store';
 
 function hcmError(status: number, error: HcmError) {
   return HttpResponse.json(error, { status });
+}
+
+function decisionResponse(result: DecisionResult, conflictMessage: string) {
+  switch (result.kind) {
+    case DecisionResultKind.NotFound:
+      return hcmError(404, { code: HcmErrorCode.NotFound, message: 'request not found' });
+    case DecisionResultKind.Conflict:
+      return hcmError(409, { code: HcmErrorCode.Conflict, message: conflictMessage });
+    case DecisionResultKind.Success:
+      return HttpResponse.json(result.request);
+  }
 }
 
 export const hcmHandlers = [
@@ -17,14 +30,14 @@ export const hcmHandlers = [
     const locationId = url.searchParams.get('locationId');
     if (!employeeId || !locationId) {
       return hcmError(400, {
-        code: 'invalid-request',
+        code: HcmErrorCode.InvalidRequest,
         message: 'employeeId and locationId are required',
       });
     }
     const balance = hcmStore.getBalance({ employeeId, locationId });
     if (!balance) {
       return hcmError(404, {
-        code: 'not-found',
+        code: HcmErrorCode.NotFound,
         message: 'balance cell not found',
       });
     }
@@ -47,30 +60,30 @@ export const hcmHandlers = [
     });
 
     switch (result.kind) {
-      case 'success':
+      case WriteResultKind.Success:
         return HttpResponse.json<Balance>(result.balance);
-      case 'silent-wrong':
+      case WriteResultKind.SilentWrong:
         return HttpResponse.json<Balance>(result.balance);
-      case 'conflict':
+      case WriteResultKind.Conflict:
         return hcmError(409, {
-          code: 'conflict',
+          code: HcmErrorCode.Conflict,
           message: 'balance version changed; re-read and retry',
           current: result.current,
         });
-      case 'insufficient-balance':
+      case WriteResultKind.InsufficientBalance:
         return hcmError(422, {
-          code: 'insufficient-balance',
+          code: HcmErrorCode.InsufficientBalance,
           message: 'not enough available balance',
           current: result.current,
         });
-      case 'not-found':
+      case WriteResultKind.NotFound:
         return hcmError(404, {
-          code: 'not-found',
+          code: HcmErrorCode.NotFound,
           message: 'balance cell not found',
         });
-      case 'invalid-request':
+      case WriteResultKind.InvalidRequest:
         return hcmError(400, {
-          code: 'invalid-request',
+          code: HcmErrorCode.InvalidRequest,
           message: 'days must be a positive integer',
         });
     }
@@ -84,30 +97,12 @@ export const hcmHandlers = [
   http.post('/api/hcm/requests/:id/approve', async ({ params }) => {
     await cellLatency();
     const result = hcmStore.approveRequest(String(params.id));
-    if (result.kind === 'not-found') {
-      return hcmError(404, { code: 'not-found', message: 'request not found' });
-    }
-    if (result.kind === 'conflict') {
-      return hcmError(409, {
-        code: 'conflict',
-        message: 'request is no longer pending',
-      });
-    }
-    return HttpResponse.json(result.request);
+    return decisionResponse(result, 'request is no longer pending');
   }),
 
   http.post('/api/hcm/requests/:id/deny', async ({ params }) => {
     await cellLatency();
     const result = hcmStore.denyRequest(String(params.id));
-    if (result.kind === 'not-found') {
-      return hcmError(404, { code: 'not-found', message: 'request not found' });
-    }
-    if (result.kind === 'conflict') {
-      return hcmError(409, {
-        code: 'conflict',
-        message: 'request is no longer pending',
-      });
-    }
-    return HttpResponse.json(result.request);
+    return decisionResponse(result, 'request is no longer pending');
   }),
 ];

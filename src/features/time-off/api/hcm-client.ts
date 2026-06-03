@@ -1,4 +1,5 @@
 import type { Balance, BalanceCell, FileTimeOffPayload, HcmError, TimeOffRequest } from './types';
+import { HcmErrorCode } from './enums';
 
 export class HcmRequestError extends Error {
   readonly status: number;
@@ -17,7 +18,7 @@ async function parseError(response: Response): Promise<never> {
   try {
     body = (await response.json()) as HcmError;
   } catch {
-    body = { code: 'invalid-request', message: response.statusText };
+    body = { code: HcmErrorCode.InvalidRequest, message: response.statusText };
   }
   throw new HcmRequestError(response.status, body);
 }

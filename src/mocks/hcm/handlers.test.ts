@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import type { Balance, HcmError } from '@/features/time-off/api/types';
+import { HcmErrorCode, TimeOffRequestStatus } from '@/features/time-off/api/enums';
 
+import { WriteBehavior } from './enums';
 import { hcmStore, resetHcmStore } from './store';
 import { setLatencyEnabled } from './latency';
 
@@ -47,13 +49,13 @@ describe('GET /api/hcm/balance (per-cell read)', () => {
   it('400 when params are missing', async () => {
     const res = await fetch('/api/hcm/balance');
     expect(res.status).toBe(400);
-    expect(((await res.json()) as HcmError).code).toBe('invalid-request');
+    expect(((await res.json()) as HcmError).code).toBe(HcmErrorCode.InvalidRequest);
   });
 
   it('404 for an unknown cell', async () => {
     const res = await getBalance('nobody', 'mars');
     expect(res.status).toBe(404);
-    expect(((await res.json()) as HcmError).code).toBe('not-found');
+    expect(((await res.json()) as HcmError).code).toBe(HcmErrorCode.NotFound);
   });
 });
 
@@ -80,24 +82,24 @@ describe('POST /api/hcm/balance (write)', () => {
     const res = await fileRequest({ ...CELL, days: 1, expectedVersion: 99 });
     expect(res.status).toBe(409);
     const error = (await res.json()) as HcmError;
-    expect(error.code).toBe('conflict');
+    expect(error.code).toBe(HcmErrorCode.Conflict);
     expect(error.current?.version).toBe(1);
   });
 
   it('insufficient-balance: days exceed available', async () => {
     const res = await fileRequest({ ...CELL, days: 999, expectedVersion: 1 });
     expect(res.status).toBe(422);
-    expect(((await res.json()) as HcmError).code).toBe('insufficient-balance');
+    expect(((await res.json()) as HcmError).code).toBe(HcmErrorCode.InsufficientBalance);
   });
 
   it('invalid-request: non-positive days', async () => {
     const res = await fileRequest({ ...CELL, days: 0, expectedVersion: 1 });
     expect(res.status).toBe(400);
-    expect(((await res.json()) as HcmError).code).toBe('invalid-request');
+    expect(((await res.json()) as HcmError).code).toBe(HcmErrorCode.InvalidRequest);
   });
 
   it('silent-wrong (injected): 200 but balance did not move', async () => {
-    hcmStore.setNextWriteBehavior(CELL, 'silent-wrong');
+    hcmStore.setNextWriteBehavior(CELL, WriteBehavior.SilentWrong);
     const res = await fileRequest({ ...CELL, days: 3, expectedVersion: 1 });
     expect(res.status).toBe(200);
     const balance = (await res.json()) as Balance;
@@ -110,19 +112,19 @@ describe('POST /api/hcm/balance (write)', () => {
   });
 
   it('conflict (injected) regardless of version', async () => {
-    hcmStore.setNextWriteBehavior(CELL, 'conflict');
+    hcmStore.setNextWriteBehavior(CELL, WriteBehavior.Conflict);
     const res = await fileRequest({ ...CELL, days: 1, expectedVersion: 1 });
     expect(res.status).toBe(409);
   });
 
   it('insufficient-balance (injected) regardless of amount', async () => {
-    hcmStore.setNextWriteBehavior(CELL, 'insufficient-balance');
+    hcmStore.setNextWriteBehavior(CELL, WriteBehavior.InsufficientBalance);
     const res = await fileRequest({ ...CELL, days: 1, expectedVersion: 1 });
     expect(res.status).toBe(422);
   });
 
   it('injection is consumed once', async () => {
-    hcmStore.setNextWriteBehavior(CELL, 'conflict');
+    hcmStore.setNextWriteBehavior(CELL, WriteBehavior.Conflict);
     expect((await fileRequest({ ...CELL, days: 1, expectedVersion: 1 })).status).toBe(409);
     expect((await fileRequest({ ...CELL, days: 1, expectedVersion: 1 })).status).toBe(200);
   });
@@ -137,7 +139,7 @@ describe('manager decisions', () => {
     const after = hcmStore.getBalance(CELL)!;
     expect(after.pending).toBe(0);
     expect(after.version).toBe(2);
-    expect(hcmStore.getRequest('r1')?.status).toBe('approved');
+    expect(hcmStore.getRequest('r1')?.status).toBe(TimeOffRequestStatus.Approved);
   });
 
   it('deny: returns days to available', async () => {
@@ -148,7 +150,7 @@ describe('manager decisions', () => {
     const after = hcmStore.getBalance(CELL)!;
     expect(after.available).toBe(14);
     expect(after.pending).toBe(0);
-    expect(hcmStore.getRequest('r1')?.status).toBe('denied');
+    expect(hcmStore.getRequest('r1')?.status).toBe(TimeOffRequestStatus.Denied);
   });
 
   it('approve on already-decided request → conflict', async () => {

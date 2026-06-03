@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { resetHcmStore, setLatencyEnabled } from '@/mocks/hcm';
 
+import { HcmErrorCode, TimeOffRequestStatus } from './enums';
 import {
   approveRequest,
   denyRequest,
@@ -27,7 +28,7 @@ describe('hcm-client', () => {
     ).rejects.toMatchObject({
       name: 'HcmRequestError',
       status: 409,
-      body: { code: 'conflict' },
+      body: { code: HcmErrorCode.Conflict },
     });
   });
 
@@ -39,10 +40,10 @@ describe('hcm-client', () => {
 
   it('approves and denies requests', async () => {
     const approved = await approveRequest('r1');
-    expect(approved.status).toBe('approved');
+    expect(approved.status).toBe(TimeOffRequestStatus.Approved);
 
     resetHcmStore();
     const denied = await denyRequest('r1');
-    expect(denied.status).toBe('denied');
+    expect(denied.status).toBe(TimeOffRequestStatus.Denied);
   });
 });

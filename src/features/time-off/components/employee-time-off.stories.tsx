@@ -5,7 +5,13 @@ import { delay, http, HttpResponse } from 'msw';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { Toaster } from '@/shared/components/toast';
-import { hcmHandlers, hcmStore, resetHcmStore, setLatencyEnabled } from '@/mocks/hcm';
+import {
+  hcmHandlers,
+  hcmStore,
+  resetHcmStore,
+  setLatencyEnabled,
+  WriteBehavior,
+} from '@/mocks/hcm';
 
 import { EmployeeTimeOff } from './employee-time-off';
 
@@ -80,7 +86,10 @@ export const HcmRejectedInsufficient: Story = {
   beforeEach: () => {
     resetHcmStore();
     setLatencyEnabled(false);
-    hcmStore.setNextWriteBehavior({ employeeId: 'e1', locationId: 'us' }, 'insufficient-balance');
+    hcmStore.setNextWriteBehavior(
+      { employeeId: 'e1', locationId: 'us' },
+      WriteBehavior.InsufficientBalance,
+    );
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -94,7 +103,10 @@ export const HcmSilentlyWrong: Story = {
   beforeEach: () => {
     resetHcmStore();
     setLatencyEnabled(false);
-    hcmStore.setNextWriteBehavior({ employeeId: 'e1', locationId: 'us' }, 'silent-wrong');
+    hcmStore.setNextWriteBehavior(
+      { employeeId: 'e1', locationId: 'us' },
+      WriteBehavior.SilentWrong,
+    );
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
