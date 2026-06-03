@@ -1,8 +1,14 @@
 'use client';
 
-import { Button, Card, CardContent, Typography } from '@/shared/components';
+import { Card, CardContent, Typography } from '@/shared/components';
 
 import type { Balance, TimeOffRequest } from '../api/types';
+import {
+  BalanceContext,
+  DecisionActions,
+  InsufficientNote,
+  StaleWarning,
+} from './pending-approval-row-parts';
 
 type PendingApprovalRowProps = {
   request: TimeOffRequest;
@@ -41,41 +47,19 @@ export function PendingApprovalRow({
             </Typography>
             <Typography variant="muted">Employee {request.employeeId}</Typography>
           </div>
-          {balanceLoading ? (
-            <Typography variant="muted">Reading balance…</Typography>
-          ) : balance ? (
-            <div className="text-right">
-              <Typography variant="muted">Available</Typography>
-              <Typography variant="h4" as="span">
-                {balance.available}
-              </Typography>
-            </div>
-          ) : null}
+          <BalanceContext balance={balance} loading={balanceLoading} />
         </div>
 
-        {stale ? (
-          <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-secondary p-3">
-            <Typography variant="muted">
-              The balance changed since you opened this. Re-read before deciding.
-            </Typography>
-            <Button variant="secondary" onClick={onRefresh} disabled={deciding}>
-              Re-read
-            </Button>
-          </div>
-        ) : null}
+        {stale ? <StaleWarning onRefresh={onRefresh} disabled={deciding} /> : null}
 
-        {insufficient && !stale ? (
-          <Typography variant="muted">Insufficient available balance for this request.</Typography>
-        ) : null}
+        {insufficient && !stale ? <InsufficientNote /> : null}
 
-        <div className="flex gap-3">
-          <Button onClick={onApprove} disabled={approveDisabled}>
-            {deciding ? 'Working…' : 'Approve'}
-          </Button>
-          <Button variant="secondary" onClick={onDeny} disabled={deciding}>
-            Deny
-          </Button>
-        </div>
+        <DecisionActions
+          deciding={deciding}
+          approveDisabled={approveDisabled}
+          onApprove={onApprove}
+          onDeny={onDeny}
+        />
       </CardContent>
     </Card>
   );
