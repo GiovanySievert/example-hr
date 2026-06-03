@@ -104,6 +104,7 @@ export const HcmRejectedInsufficient: Story = {
     const canvas = within(canvasElement);
     await submitTwoDays(canvasElement);
     await waitFor(() => expect(canvas.getByText('Request not filed')).toBeInTheDocument());
+    await waitFor(() => expect(canvas.getByText('Reverted')).toBeInTheDocument());
     await waitFor(() => expect(canvas.getByText('12')).toBeInTheDocument());
   },
 };
@@ -123,6 +124,7 @@ export const HcmSilentlyWrong: Story = {
     await waitFor(() =>
       expect(canvas.getByText('Request could not be confirmed')).toBeInTheDocument(),
     );
+    await waitFor(() => expect(canvas.getByText('Reverted')).toBeInTheDocument());
     await waitFor(() => expect(canvas.getByText('12')).toBeInTheDocument());
   },
 };

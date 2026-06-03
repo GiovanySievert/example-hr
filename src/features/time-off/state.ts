@@ -1,7 +1,11 @@
 import { atom } from 'jotai';
 
 import { cellKey } from './api/cell-key';
-import type { BalanceCell } from './api/types';
+import type { BalanceCell, TimeOffRequest } from './api/types';
+
+export type RevertedTimeOffRequest = TimeOffRequest & {
+  reverted: true;
+};
 
 export const inFlightCellsAtom = atom<Set<string>>(new Set<string>());
 
@@ -34,4 +38,10 @@ export const acknowledgeCellRefreshedAtom = atom(null, (get, set, cell: BalanceC
   const next = new Set(get(refreshedCellsAtom));
   next.delete(cellKey(cell));
   set(refreshedCellsAtom, next);
+});
+
+export const rolledBackRequestsAtom = atom<RevertedTimeOffRequest[]>([]);
+
+export const addRolledBackRequestAtom = atom(null, (get, set, request: RevertedTimeOffRequest) => {
+  set(rolledBackRequestsAtom, [request, ...get(rolledBackRequestsAtom)]);
 });

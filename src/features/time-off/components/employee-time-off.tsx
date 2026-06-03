@@ -13,7 +13,12 @@ import { useBalances } from '../hooks/use-balances';
 import { useFileTimeOff } from '../hooks/use-file-time-off';
 import { usePendingRequests } from '../hooks/use-pending-requests';
 import { useReconcile } from '../hooks/use-reconcile';
-import { acknowledgeCellRefreshedAtom, inFlightCellsAtom, refreshedCellsAtom } from '../state';
+import {
+  acknowledgeCellRefreshedAtom,
+  inFlightCellsAtom,
+  refreshedCellsAtom,
+  rolledBackRequestsAtom,
+} from '../state';
 import { BalanceCard } from './balance-card';
 import { TimeOffRequestForm, type LocationOption } from './time-off-request-form';
 import { RequestStatusList } from './request-status-list';
@@ -37,6 +42,7 @@ export function EmployeeTimeOff({ employeeId, reconcileIntervalMs }: EmployeeTim
 
   const inFlight = useAtomValue(inFlightCellsAtom);
   const refreshed = useAtomValue(refreshedCellsAtom);
+  const rolledBackRequests = useAtomValue(rolledBackRequestsAtom);
   const acknowledgeRefreshed = useSetAtom(acknowledgeCellRefreshedAtom);
 
   const cells = useMemo(
@@ -54,8 +60,11 @@ export function EmployeeTimeOff({ employeeId, reconcileIntervalMs }: EmployeeTim
   );
 
   const requests = useMemo(
-    () => (requestsQuery.data ?? []).filter((request) => request.employeeId === employeeId),
-    [employeeId, requestsQuery.data],
+    () => [
+      ...rolledBackRequests.filter((request) => request.employeeId === employeeId),
+      ...(requestsQuery.data ?? []).filter((request) => request.employeeId === employeeId),
+    ],
+    [employeeId, requestsQuery.data, rolledBackRequests],
   );
 
   function statusFor(cell: Balance): BalanceCardStatus {

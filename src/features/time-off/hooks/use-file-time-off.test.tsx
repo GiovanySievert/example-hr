@@ -6,6 +6,7 @@ import { hcmStore, resetHcmStore, setLatencyEnabled, WriteBehavior } from '@/moc
 import { fetchBalance } from '../api/hcm-client';
 import { timeOffKeys } from '../api/query-keys';
 import type { Balance } from '../api/types';
+import { rolledBackRequestsAtom } from '../state';
 import { useFileTimeOff } from './use-file-time-off';
 import { usePendingRequests } from './use-pending-requests';
 import { createWrapper } from './test-utils';
@@ -56,7 +57,7 @@ describe('useFileTimeOff', () => {
   });
 
   it('rolls back on insufficient-balance', async () => {
-    const { Wrapper, queryClient } = createWrapper();
+    const { Wrapper, queryClient, store } = createWrapper();
     const before = await seedCellCache(queryClient);
     hcmStore.setNextWriteBehavior(CELL, WriteBehavior.InsufficientBalance);
 
@@ -67,10 +68,13 @@ describe('useFileTimeOff', () => {
 
     const cached = queryClient.getQueryData<Balance>(timeOffKeys.balance(CELL));
     expect(cached?.available).toBe(before.available);
+    expect(store.get(rolledBackRequestsAtom)).toMatchObject([
+      { employeeId: CELL.employeeId, locationId: CELL.locationId, days: 1, reverted: true },
+    ]);
   });
 
   it('detects silent-wrong: success response but authoritative re-read contradicts, reverts', async () => {
-    const { Wrapper, queryClient } = createWrapper();
+    const { Wrapper, queryClient, store } = createWrapper();
     const before = await seedCellCache(queryClient);
     hcmStore.setNextWriteBehavior(CELL, WriteBehavior.SilentWrong);
 
@@ -83,6 +87,9 @@ describe('useFileTimeOff', () => {
     expect(cached?.available).toBe(before.available);
     expect(cached?.pending).toBe(before.pending);
     expect(cached?.version).toBe(before.version);
+    expect(store.get(rolledBackRequestsAtom)).toMatchObject([
+      { employeeId: CELL.employeeId, locationId: CELL.locationId, days: 3, reverted: true },
+    ]);
   });
 
   it('refreshes the request list after a confirmed filing', async () => {

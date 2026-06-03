@@ -6,9 +6,15 @@ import { useSetAtom } from 'jotai';
 import { useToast } from '@/shared/components/toast';
 
 import { fetchBalance, fileTimeOff, HcmRequestError } from '../api/hcm-client';
+import { TimeOffRequestStatus } from '../api/enums';
 import { timeOffKeys } from '../api/query-keys';
 import type { Balance, BalanceCell } from '../api/types';
-import { clearCellInFlightAtom, markCellInFlightAtom } from '../state';
+import {
+  addRolledBackRequestAtom,
+  clearCellInFlightAtom,
+  markCellInFlightAtom,
+  type RevertedTimeOffRequest,
+} from '../state';
 
 type FileTimeOffVariables = BalanceCell & { days: number };
 
@@ -31,11 +37,26 @@ function isSilentlyWrong(before: Balance, authoritative: Balance, days: number):
   return !movedCorrectly;
 }
 
+function makeRolledBackRequest({ employeeId, locationId, days }: FileTimeOffVariables) {
+  const now = new Date().toISOString();
+  return {
+    id: `reverted-${employeeId}-${locationId}-${Date.now()}`,
+    employeeId,
+    locationId,
+    days,
+    status: TimeOffRequestStatus.Pending,
+    createdAt: now,
+    updatedAt: now,
+    reverted: true,
+  } satisfies RevertedTimeOffRequest;
+}
+
 export function useFileTimeOff() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const markInFlight = useSetAtom(markCellInFlightAtom);
   const clearInFlight = useSetAtom(clearCellInFlightAtom);
+  const addRolledBackRequest = useSetAtom(addRolledBackRequestAtom);
 
   return useMutation<Balance, Error, FileTimeOffVariables, MutationContext>({
     mutationFn: async ({ employeeId, locationId, days }) => {
@@ -58,7 +79,7 @@ export function useFileTimeOff() {
       return { previous };
     },
 
-    onError: (error, { employeeId, locationId }, context) => {
+    onError: (error, { employeeId, locationId, days }, context) => {
       const cell: BalanceCell = { employeeId, locationId };
       const key = timeOffKeys.balance(cell);
       if (context?.previous) {
@@ -74,6 +95,7 @@ export function useFileTimeOff() {
           ? error.body.message
           : 'Could not reach the HCM. Please try again.';
 
+      addRolledBackRequest(makeRolledBackRequest({ employeeId, locationId, days }));
       toast({
         variant: 'error',
         title: 'Request not filed',
@@ -89,6 +111,7 @@ export function useFileTimeOff() {
       const before = context?.previous;
       if (before && isSilentlyWrong(before, authoritative, days)) {
         queryClient.setQueryData<Balance>(key, authoritative);
+        addRolledBackRequest(makeRolledBackRequest({ employeeId, locationId, days }));
         toast({
           variant: 'error',
           title: 'Request could not be confirmed',

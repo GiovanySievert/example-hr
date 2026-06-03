@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Provider as JotaiProvider } from 'jotai';
+import { Provider as JotaiProvider, createStore } from 'jotai';
 
 export function createTestQueryClient() {
   return new QueryClient({
@@ -12,13 +12,13 @@ export function createTestQueryClient() {
   });
 }
 
-export function createWrapper(queryClient = createTestQueryClient()) {
+export function createWrapper(queryClient = createTestQueryClient(), store = createStore()) {
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
-        <JotaiProvider>{children}</JotaiProvider>
+        <JotaiProvider store={store}>{children}</JotaiProvider>
       </QueryClientProvider>
     );
   }
-  return { Wrapper, queryClient };
+  return { Wrapper, queryClient, store };
 }
