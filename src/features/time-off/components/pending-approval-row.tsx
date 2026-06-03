@@ -17,6 +17,7 @@ type PendingApprovalRowProps = {
   balanceLoading?: boolean;
   stale?: boolean;
   deciding?: boolean;
+  showEmployeeLabel?: boolean;
   onApprove: () => void;
   onDeny: () => void;
   onRefresh: () => void;
@@ -29,6 +30,7 @@ export function PendingApprovalRow({
   balanceLoading = false,
   stale = false,
   deciding = false,
+  showEmployeeLabel = true,
   onApprove,
   onDeny,
   onRefresh,
@@ -45,7 +47,9 @@ export function PendingApprovalRow({
             <Typography variant="small">
               {request.days} day(s) · {location}
             </Typography>
-            <Typography variant="muted">Employee {request.employeeId}</Typography>
+            {showEmployeeLabel ? (
+              <Typography variant="muted">Employee {request.employeeId}</Typography>
+            ) : null}
           </div>
           <BalanceContext balance={balance} loading={balanceLoading} />
         </div>

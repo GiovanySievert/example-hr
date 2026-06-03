@@ -11,9 +11,14 @@ import { PendingApprovalRow } from './pending-approval-row';
 type PendingApprovalItemProps = {
   request: TimeOffRequest;
   locationLabel?: string;
+  showEmployeeLabel?: boolean;
 };
 
-export function PendingApprovalItem({ request, locationLabel }: PendingApprovalItemProps) {
+export function PendingApprovalItem({
+  request,
+  locationLabel,
+  showEmployeeLabel = true,
+}: PendingApprovalItemProps) {
   const cell = {
     employeeId: request.employeeId,
     locationId: request.locationId,
@@ -55,6 +60,7 @@ export function PendingApprovalItem({ request, locationLabel }: PendingApprovalI
       balanceLoading={balanceQuery.isLoading}
       stale={stale}
       deciding={deciding}
+      showEmployeeLabel={showEmployeeLabel}
       onApprove={() => approve.mutate(request)}
       onDeny={() => deny.mutate(request)}
       onRefresh={handleRefresh}

@@ -46,7 +46,18 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const PendingBalanceOk: Story = {};
+export const PendingBalanceOk: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(await canvas.findByRole('heading', { name: 'Employee e1' })).toBeInTheDocument();
+    await expect(await canvas.findByRole('heading', { name: 'Employee e2' })).toBeInTheDocument();
+    await expect(await canvas.findByRole('heading', { name: 'Employee e3' })).toBeInTheDocument();
+    await waitFor(() => expect(canvas.getAllByText('2 pending requests')).toHaveLength(2));
+    await expect(canvas.getAllByText('1 pending request')).toHaveLength(1);
+    await expect(canvas.getAllByText('Employee e1')).toHaveLength(1);
+  },
+};
 
 function seedSingleRequest() {
   resetHcmStore({
