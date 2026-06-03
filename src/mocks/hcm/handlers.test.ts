@@ -119,6 +119,16 @@ describe('POST /api/hcm/balance (write)', () => {
     expect(reread.available).toBe(12);
   });
 
+  it('silent-wrong pending mismatch (injected): 200 but pending did not move', async () => {
+    hcmStore.setNextWriteBehavior(CELL, WriteBehavior.SilentWrongPendingMismatch);
+    const res = await fileRequest({ ...CELL, days: 3, expectedVersion: 1 });
+    expect(res.status).toBe(200);
+    const balance = (await res.json()) as Balance;
+    expect(balance.available).toBe(9);
+    expect(balance.pending).toBe(2);
+    expect(balance.version).toBe(2);
+  });
+
   it('conflict (injected) regardless of version', async () => {
     hcmStore.setNextWriteBehavior(CELL, WriteBehavior.Conflict);
     const res = await fileRequest({ ...CELL, days: 1, expectedVersion: 1 });

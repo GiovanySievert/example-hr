@@ -3,6 +3,7 @@ export enum WriteBehavior {
   Conflict = 'conflict',
   InsufficientBalance = 'insufficient-balance',
   SilentWrong = 'silent-wrong',
+  SilentWrongPendingMismatch = 'silent-wrong-pending-mismatch',
 }
 
 export enum WriteResultKind {

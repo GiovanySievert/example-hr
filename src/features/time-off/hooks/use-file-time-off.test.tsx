@@ -92,6 +92,25 @@ describe('useFileTimeOff', () => {
     ]);
   });
 
+  it('detects silent-wrong when available moves but pending does not', async () => {
+    const { Wrapper, queryClient, store } = createWrapper();
+    const before = await seedCellCache(queryClient);
+    hcmStore.setNextWriteBehavior(CELL, WriteBehavior.SilentWrongPendingMismatch);
+
+    const { result } = renderHook(() => useFileTimeOff(), { wrapper: Wrapper });
+    result.current.mutate({ ...CELL, days: 3 });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const cached = queryClient.getQueryData<Balance>(timeOffKeys.balance(CELL));
+    expect(cached?.available).toBe(before.available - 3);
+    expect(cached?.pending).toBe(before.pending);
+    expect(cached?.version).toBe(before.version + 1);
+    expect(store.get(rolledBackRequestsAtom)).toMatchObject([
+      { employeeId: CELL.employeeId, locationId: CELL.locationId, days: 3, reverted: true },
+    ]);
+  });
+
   it('refreshes the request list after a confirmed filing', async () => {
     const { Wrapper, queryClient } = createWrapper();
     await seedCellCache(queryClient);

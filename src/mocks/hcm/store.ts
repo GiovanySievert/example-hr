@@ -146,6 +146,17 @@ export class HcmStore {
       return { kind: WriteResultKind.SilentWrong, balance: { ...cell } };
     }
 
+    if (injected === WriteBehavior.SilentWrongPendingMismatch) {
+      const updated: Balance = {
+        ...cell,
+        available: cell.available - args.days,
+        version: cell.version + 1,
+        updatedAt: this.nextTimestamp(),
+      };
+      this.balances.set(key, updated);
+      return { kind: WriteResultKind.SilentWrong, balance: { ...updated } };
+    }
+
     const updated: Balance = {
       ...cell,
       available: cell.available - args.days,

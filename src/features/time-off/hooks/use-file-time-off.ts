@@ -32,9 +32,12 @@ function applyOptimisticDelta(balance: Balance, days: number): Balance {
 
 function isSilentlyWrong(before: Balance, authoritative: Balance, days: number): boolean {
   const expectedAvailable = before.available - days;
-  const movedCorrectly =
-    authoritative.available === expectedAvailable && authoritative.version > before.version;
-  return !movedCorrectly;
+  const expectedPending = before.pending + days;
+  return (
+    authoritative.available !== expectedAvailable ||
+    authoritative.pending !== expectedPending ||
+    authoritative.version <= before.version
+  );
 }
 
 function makeRolledBackRequest({ employeeId, locationId, days }: FileTimeOffVariables) {
@@ -116,7 +119,7 @@ export function useFileTimeOff() {
           variant: 'error',
           title: 'Request could not be confirmed',
           description:
-            'The HCM reported success but the balance did not change. Your request was reverted.',
+            'The HCM reported success but the balance changed incoherently. Your request was reverted.',
         });
         return;
       }
