@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ExampleHR
 
-## Getting Started
+Aplicação de exemplo construída com a seguinte stack:
 
-First, run the development server:
+| Área | Tecnologia |
+|------|------------|
+| Framework | [Next.js 16](https://nextjs.org/) (App Router) |
+| Linguagem | TypeScript |
+| Estilo | [Tailwind CSS v4](https://tailwindcss.com/) |
+| Estado global | [Jotai](https://jotai.org/) |
+| Data fetching | [TanStack React Query v5](https://tanstack.com/query) |
+| Documentação de componentes | [Storybook 10](https://storybook.js.org/) |
+| Testes | [Vitest](https://vitest.dev/) + React Testing Library |
+| Stories como testes | `@storybook/addon-vitest` (browser mode via Playwright) |
+| Mock de API | [MSW](https://mswjs.io/) (testes, Storybook e browser dev) |
+
+## Começando
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Comando | Descrição |
+|---------|-----------|
+| `npm run dev` | Servidor de desenvolvimento |
+| `npm run build` | Build de produção |
+| `npm run start` | Servir o build de produção |
+| `npm run lint` | ESLint |
+| `npm run storybook` | Storybook em http://localhost:6006 |
+| `npm run build-storybook` | Build estático do Storybook |
+| `npm test` | Vitest em watch (unit + stories) |
+| `npm run test:run` | Vitest single-run (unit + stories no browser mode) |
+| `npm run test:unit` | Apenas os testes unitários (jsdom) |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Estrutura
 
-## Learn More
+```
+src/
+  app/
+    layout.tsx        # envolve a árvore com <Providers>
+    providers.tsx     # React Query + Jotai + Devtools (Client Component)
+    page.tsx
+  components/
+    button.tsx
+    button.stories.tsx
+  lib/
+    query-client.ts   # factory do QueryClient
+    store.ts          # átomos Jotai
+  mocks/
+    handlers.ts       # handlers MSW compartilhados
+    server.ts         # MSW para Node (Vitest)
+    browser.ts        # MSW para o navegador (dev)
+.storybook/           # config do Storybook (MSW + Tailwind)
+vitest.config.ts      # projetos "unit" (jsdom) e "storybook" (browser)
+vitest.setup.ts       # RTL matchers + MSW server
+public/mockServiceWorker.js  # worker MSW (gerado)
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Mocks de API (MSW)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Os handlers ficam em [`src/mocks/handlers.ts`](src/mocks/handlers.ts) e são reaproveitados
+em três ambientes:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Testes** — `src/mocks/server.ts` é iniciado em `vitest.setup.ts`.
+- **Storybook** — inicializado em `.storybook/preview.tsx`; sobrescreva por story via
+  `parameters.msw.handlers`.
+- **Browser (dev)** — `src/mocks/browser.ts` + `public/mockServiceWorker.js`. O worker já
+  está pronto, mas **não é iniciado por padrão** — chame `worker.start()` quando precisar
+  (por exemplo, atrás de uma flag em desenvolvimento).
