@@ -99,6 +99,9 @@ export function useFileTimeOff() {
       }
 
       queryClient.setQueryData<Balance>(key, authoritative);
+      await queryClient.invalidateQueries({
+        queryKey: timeOffKeys.requests(),
+      });
       toast({
         variant: 'success',
         title: 'Request filed',

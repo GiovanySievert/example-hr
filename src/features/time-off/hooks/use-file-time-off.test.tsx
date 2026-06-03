@@ -7,6 +7,7 @@ import { fetchBalance } from '../api/hcm-client';
 import { timeOffKeys } from '../api/query-keys';
 import type { Balance } from '../api/types';
 import { useFileTimeOff } from './use-file-time-off';
+import { usePendingRequests } from './use-pending-requests';
 import { createWrapper } from './test-utils';
 
 const CELL = { employeeId: 'e1', locationId: 'us' };
@@ -82,5 +83,33 @@ describe('useFileTimeOff', () => {
     expect(cached?.available).toBe(before.available);
     expect(cached?.pending).toBe(before.pending);
     expect(cached?.version).toBe(before.version);
+  });
+
+  it('refreshes the request list after a confirmed filing', async () => {
+    const { Wrapper, queryClient } = createWrapper();
+    await seedCellCache(queryClient);
+
+    const { result } = renderHook(
+      () => ({
+        fileTimeOff: useFileTimeOff(),
+        pendingRequests: usePendingRequests(),
+      }),
+      { wrapper: Wrapper },
+    );
+
+    await waitFor(() => expect(result.current.pendingRequests.data).toHaveLength(5));
+
+    result.current.fileTimeOff.mutate({ ...CELL, days: 3 });
+
+    await waitFor(() => expect(result.current.fileTimeOff.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current.pendingRequests.data).toHaveLength(6));
+    expect(
+      result.current.pendingRequests.data?.some(
+        (request) =>
+          request.employeeId === CELL.employeeId &&
+          request.locationId === CELL.locationId &&
+          request.days === 3,
+      ),
+    ).toBe(true);
   });
 });
