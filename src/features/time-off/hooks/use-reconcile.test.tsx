@@ -45,9 +45,7 @@ describe('useReconcile', () => {
     renderHook(() => useReconcile({ intervalMs: 50 }), { wrapper: Wrapper });
 
     await waitFor(() => {
-      const cached = queryClient.getQueryData<Balance>(
-        timeOffKeys.balance(CELL),
-      );
+      const cached = queryClient.getQueryData<Balance>(timeOffKeys.balance(CELL));
       expect(cached?.available).toBe(initial.available + 5);
     });
 

@@ -1,29 +1,29 @@
-'use client'
+'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, Typography } from '@/shared/components'
+import { Card, CardContent, CardHeader, CardTitle, Typography } from '@/shared/components';
 
-import type { TimeOffRequest, TimeOffRequestStatus } from '../api/types'
+import type { TimeOffRequest, TimeOffRequestStatus } from '../api/types';
 
 export type RequestListItem = TimeOffRequest & {
-  reverted?: boolean
-}
+  reverted?: boolean;
+};
 
 type RequestStatusListProps = {
-  requests: RequestListItem[]
-  locationLabels?: Record<string, string>
-}
+  requests: RequestListItem[];
+  locationLabels?: Record<string, string>;
+};
 
 const statusLabel: Record<TimeOffRequestStatus, string> = {
   pending: 'Pending',
   approved: 'Approved',
-  denied: 'Denied'
-}
+  denied: 'Denied',
+};
 
 const statusClass: Record<TimeOffRequestStatus, string> = {
   pending: 'border-border bg-secondary text-muted',
   approved: 'border-primary bg-primary text-primary-foreground',
-  denied: 'border-border bg-secondary text-secondary-foreground'
-}
+  denied: 'border-border bg-secondary text-secondary-foreground',
+};
 
 export function RequestStatusList({ requests, locationLabels }: RequestStatusListProps) {
   if (requests.length === 0) {
@@ -33,7 +33,7 @@ export function RequestStatusList({ requests, locationLabels }: RequestStatusLis
           <Typography variant="muted">No requests yet.</Typography>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -43,7 +43,7 @@ export function RequestStatusList({ requests, locationLabels }: RequestStatusLis
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {requests.map((request) => {
-          const location = locationLabels?.[request.locationId] ?? request.locationId.toUpperCase()
+          const location = locationLabels?.[request.locationId] ?? request.locationId.toUpperCase();
           return (
             <div
               key={request.id}
@@ -54,7 +54,9 @@ export function RequestStatusList({ requests, locationLabels }: RequestStatusLis
                   {request.days} day(s) · {location}
                 </Typography>
                 {request.reverted ? (
-                  <Typography variant="muted">Reverted — the HCM could not confirm this request.</Typography>
+                  <Typography variant="muted">
+                    Reverted — the HCM could not confirm this request.
+                  </Typography>
                 ) : null}
               </div>
               <span
@@ -67,9 +69,9 @@ export function RequestStatusList({ requests, locationLabels }: RequestStatusLis
                 {request.reverted ? 'Reverted' : statusLabel[request.status]}
               </span>
             </div>
-          )
+          );
         })}
       </CardContent>
     </Card>
-  )
+  );
 }

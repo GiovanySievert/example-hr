@@ -4,11 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useToast } from '@/shared/components/toast';
 
-import {
-  approveRequest,
-  fetchBalance,
-  HcmRequestError,
-} from '../api/hcm-client';
+import { approveRequest, fetchBalance, HcmRequestError } from '../api/hcm-client';
 import { timeOffKeys } from '../api/query-keys';
 import type { BalanceCell, TimeOffRequest } from '../api/types';
 

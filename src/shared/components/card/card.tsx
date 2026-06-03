@@ -12,17 +12,12 @@ export function Card({ className = '', ...props }: DivProps) {
 }
 
 export function CardHeader({ className = '', ...props }: DivProps) {
-  return (
-    <div className={`flex flex-col gap-1 p-6 ${className}`} {...props} />
-  );
+  return <div className={`flex flex-col gap-1 p-6 ${className}`} {...props} />;
 }
 
 export function CardTitle({ className = '', ...props }: HeadingProps) {
   return (
-    <h3
-      className={`text-lg font-semibold leading-tight tracking-tight ${className}`}
-      {...props}
-    />
+    <h3 className={`text-lg font-semibold leading-tight tracking-tight ${className}`} {...props} />
   );
 }
 
@@ -35,7 +30,5 @@ export function CardContent({ className = '', ...props }: DivProps) {
 }
 
 export function CardFooter({ className = '', ...props }: DivProps) {
-  return (
-    <div className={`flex items-center p-6 pt-0 ${className}`} {...props} />
-  );
+  return <div className={`flex items-center p-6 pt-0 ${className}`} {...props} />;
 }

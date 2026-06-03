@@ -8,10 +8,7 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { fetchBalances } from '../api/hcm-client';
 import { timeOffKeys } from '../api/query-keys';
 import type { Balance, BalanceCell } from '../api/types';
-import {
-  inFlightCellsAtom,
-  markCellRefreshedAtom,
-} from '../state';
+import { inFlightCellsAtom, markCellRefreshedAtom } from '../state';
 import { cellKey } from '../api/cell-key';
 
 type UseReconcileOptions = {
@@ -46,9 +43,7 @@ export function useReconcile(options: UseReconcileOptions = {}) {
 
       if (inFlight.has(key)) continue;
 
-      const existing = queryClient.getQueryData<Balance>(
-        timeOffKeys.balance(cell),
-      );
+      const existing = queryClient.getQueryData<Balance>(timeOffKeys.balance(cell));
 
       if (!existing) {
         queryClient.setQueryData<Balance>(timeOffKeys.balance(cell), incoming);

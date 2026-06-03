@@ -18,9 +18,6 @@ export function ManagerApprovals() {
   }
 
   return (
-    <PendingApprovalList
-      requests={requestsQuery.data ?? []}
-      locationLabels={LOCATION_LABELS}
-    />
+    <PendingApprovalList requests={requestsQuery.data ?? []} locationLabels={LOCATION_LABELS} />
   );
 }

@@ -10,10 +10,7 @@ type PendingApprovalListProps = {
   locationLabels?: Record<string, string>;
 };
 
-export function PendingApprovalList({
-  requests,
-  locationLabels,
-}: PendingApprovalListProps) {
+export function PendingApprovalList({ requests, locationLabels }: PendingApprovalListProps) {
   if (requests.length === 0) {
     return <Typography variant="muted">No pending requests.</Typography>;
   }

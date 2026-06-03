@@ -13,9 +13,7 @@ beforeEach(() => {
 });
 
 async function getBalance(employeeId: string, locationId: string) {
-  const res = await fetch(
-    `/api/hcm/balance?employeeId=${employeeId}&locationId=${locationId}`,
-  );
+  const res = await fetch(`/api/hcm/balance?employeeId=${employeeId}&locationId=${locationId}`);
   return res;
 }
 

@@ -5,17 +5,10 @@ import { useSetAtom } from 'jotai';
 
 import { useToast } from '@/shared/components/toast';
 
-import {
-  fetchBalance,
-  fileTimeOff,
-  HcmRequestError,
-} from '../api/hcm-client';
+import { fetchBalance, fileTimeOff, HcmRequestError } from '../api/hcm-client';
 import { timeOffKeys } from '../api/query-keys';
 import type { Balance, BalanceCell } from '../api/types';
-import {
-  clearCellInFlightAtom,
-  markCellInFlightAtom,
-} from '../state';
+import { clearCellInFlightAtom, markCellInFlightAtom } from '../state';
 
 type FileTimeOffVariables = BalanceCell & { days: number };
 
@@ -31,15 +24,10 @@ function applyOptimisticDelta(balance: Balance, days: number): Balance {
   };
 }
 
-function isSilentlyWrong(
-  before: Balance,
-  authoritative: Balance,
-  days: number,
-): boolean {
+function isSilentlyWrong(before: Balance, authoritative: Balance, days: number): boolean {
   const expectedAvailable = before.available - days;
   const movedCorrectly =
-    authoritative.available === expectedAvailable &&
-    authoritative.version > before.version;
+    authoritative.available === expectedAvailable && authoritative.version > before.version;
   return !movedCorrectly;
 }
 
@@ -52,9 +40,7 @@ export function useFileTimeOff() {
   return useMutation<Balance, Error, FileTimeOffVariables, MutationContext>({
     mutationFn: async ({ employeeId, locationId, days }) => {
       const cell: BalanceCell = { employeeId, locationId };
-      const current = queryClient.getQueryData<Balance>(
-        timeOffKeys.balance(cell),
-      );
+      const current = queryClient.getQueryData<Balance>(timeOffKeys.balance(cell));
       const expectedVersion = current?.version ?? 0;
       return fileTimeOff({ employeeId, locationId, days, expectedVersion });
     },
@@ -66,10 +52,7 @@ export function useFileTimeOff() {
 
       const previous = queryClient.getQueryData<Balance>(key);
       if (previous) {
-        queryClient.setQueryData<Balance>(
-          key,
-          applyOptimisticDelta(previous, days),
-        );
+        queryClient.setQueryData<Balance>(key, applyOptimisticDelta(previous, days));
       }
       markInFlight(cell);
       return { previous };

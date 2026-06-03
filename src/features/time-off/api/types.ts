@@ -22,11 +22,7 @@ export type TimeOffRequest = {
   updatedAt: string;
 };
 
-export type HcmErrorCode =
-  | 'conflict'
-  | 'insufficient-balance'
-  | 'not-found'
-  | 'invalid-request';
+export type HcmErrorCode = 'conflict' | 'insufficient-balance' | 'not-found' | 'invalid-request';
 
 export type HcmError = {
   code: HcmErrorCode;

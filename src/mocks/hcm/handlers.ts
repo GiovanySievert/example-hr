@@ -1,10 +1,6 @@
 import { http, HttpResponse } from 'msw';
 
-import type {
-  Balance,
-  FileTimeOffPayload,
-  HcmError,
-} from '@/features/time-off/api/types';
+import type { Balance, FileTimeOffPayload, HcmError } from '@/features/time-off/api/types';
 
 import { cellLatency, corpusLatency } from './latency';
 import { hcmStore } from './store';

@@ -1,14 +1,6 @@
-import type {
-  Balance,
-  BalanceCell,
-  TimeOffRequest,
-} from '@/features/time-off/api/types';
+import type { Balance, BalanceCell, TimeOffRequest } from '@/features/time-off/api/types';
 
-export type WriteBehavior =
-  | 'success'
-  | 'conflict'
-  | 'insufficient-balance'
-  | 'silent-wrong';
+export type WriteBehavior = 'success' | 'conflict' | 'insufficient-balance' | 'silent-wrong';
 
 type Seed = {
   balances: Balance[];
@@ -77,9 +69,7 @@ export class HcmStore {
   load(seed: Seed): void {
     this.balances = new Map(seed.balances.map((b) => [cellKey(b), { ...b }]));
     this.requests = new Map(seed.requests.map((r) => [r.id, { ...r }]));
-    this.nextWriteBehavior = new Map(
-      Object.entries(seed.nextWriteBehavior ?? {}),
-    );
+    this.nextWriteBehavior = new Map(Object.entries(seed.nextWriteBehavior ?? {}));
     this.clock = 0;
   }
 
@@ -167,7 +157,9 @@ export class HcmStore {
     return { kind: 'success', balance: { ...updated }, request: { ...request } };
   }
 
-  approveRequest(id: string):
+  approveRequest(
+    id: string,
+  ):
     | { kind: 'success'; request: TimeOffRequest; balance: Balance }
     | { kind: 'not-found' }
     | { kind: 'conflict'; request: TimeOffRequest } {
@@ -201,7 +193,9 @@ export class HcmStore {
     };
   }
 
-  denyRequest(id: string):
+  denyRequest(
+    id: string,
+  ):
     | { kind: 'success'; request: TimeOffRequest; balance: Balance }
     | { kind: 'not-found' }
     | { kind: 'conflict'; request: TimeOffRequest } {

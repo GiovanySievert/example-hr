@@ -12,16 +12,9 @@ import { useBalances } from '../hooks/use-balances';
 import { useFileTimeOff } from '../hooks/use-file-time-off';
 import { usePendingRequests } from '../hooks/use-pending-requests';
 import { useReconcile } from '../hooks/use-reconcile';
-import {
-  acknowledgeCellRefreshedAtom,
-  inFlightCellsAtom,
-  refreshedCellsAtom,
-} from '../state';
+import { acknowledgeCellRefreshedAtom, inFlightCellsAtom, refreshedCellsAtom } from '../state';
 import { BalanceCard, type BalanceCardStatus } from './balance-card';
-import {
-  TimeOffRequestForm,
-  type LocationOption,
-} from './time-off-request-form';
+import { TimeOffRequestForm, type LocationOption } from './time-off-request-form';
 import { RequestStatusList } from './request-status-list';
 
 const LOCATION_LABELS: Record<string, string> = {
@@ -34,13 +27,8 @@ type EmployeeTimeOffProps = {
   reconcileIntervalMs?: number;
 };
 
-export function EmployeeTimeOff({
-  employeeId,
-  reconcileIntervalMs,
-}: EmployeeTimeOffProps) {
-  useReconcile(
-    reconcileIntervalMs ? { intervalMs: reconcileIntervalMs } : undefined,
-  );
+export function EmployeeTimeOff({ employeeId, reconcileIntervalMs }: EmployeeTimeOffProps) {
+  useReconcile(reconcileIntervalMs ? { intervalMs: reconcileIntervalMs } : undefined);
   const balancesQuery = useBalances();
   const requestsQuery = usePendingRequests();
   const fileTimeOff = useFileTimeOff();
@@ -50,10 +38,7 @@ export function EmployeeTimeOff({
   const acknowledgeRefreshed = useSetAtom(acknowledgeCellRefreshedAtom);
 
   const cells = useMemo(
-    () =>
-      (balancesQuery.data ?? []).filter(
-        (balance) => balance.employeeId === employeeId,
-      ),
+    () => (balancesQuery.data ?? []).filter((balance) => balance.employeeId === employeeId),
     [balancesQuery.data, employeeId],
   );
 
@@ -104,14 +89,9 @@ export function EmployeeTimeOff({
         <TimeOffRequestForm
           locations={locations}
           submitting={fileTimeOff.isPending}
-          onSubmit={({ locationId, days }) =>
-            fileTimeOff.mutate({ employeeId, locationId, days })
-          }
+          onSubmit={({ locationId, days }) => fileTimeOff.mutate({ employeeId, locationId, days })}
         />
-        <RequestStatusList
-          requests={requestsQuery.data ?? []}
-          locationLabels={LOCATION_LABELS}
-        />
+        <RequestStatusList requests={requestsQuery.data ?? []} locationLabels={LOCATION_LABELS} />
       </section>
     </div>
   );

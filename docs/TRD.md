@@ -9,7 +9,7 @@
 ExampleHR lets employees view their time-off balances and file requests, and lets
 managers approve or deny those requests. **ExampleHR is not the source of truth (SoT)
 for balances.** The SoT lives in an external HCM system (think Workday / SAP). ExampleHR
-only *presents* and *orchestrates*.
+only _presents_ and _orchestrates_.
 
 This split creates the central tension of the feature:
 
@@ -20,7 +20,7 @@ This split creates the central tension of the feature:
   it must **never** show a request as `approved` and then silently flip it to `denied`.
 
 We resolve this with **optimistic update + authoritative re-read + reconcile**: act fast,
-then verify against the SoT, and recover *honestly* when the SoT disagrees.
+then verify against the SoT, and recover _honestly_ when the SoT disagrees.
 
 ### Balance shape
 
@@ -53,21 +53,21 @@ then verify against the SoT, and recover *honestly* when the SoT disagrees.
 
 ### Personas
 
-- **Employee** — sees balance, submits a request. *Invariant*: never sees a request go
+- **Employee** — sees balance, submits a request. _Invariant_: never sees a request go
   `approved → denied`. A request the user perceives as accepted must not later silently flip.
 - **Manager** — approves/denies against the **balance that is valid at the moment of the
   decision** (re-read on open / on action), and is blocked from deciding on obviously stale data.
 
 ## 2. Challenges (from the brief)
 
-| # | Challenge | Where it bites |
-|---|-----------|----------------|
-| C1 | Balance refreshes **underneath** an open session (bonus trigger) | reconcile vs in-flight mutation |
-| C2 | Per-cell read is the **authoritative** truth for a cell | post-write re-read, manager decision |
-| C3 | Batch corpus is **expensive** | can't poll it tightly; used for hydration + periodic reconcile |
-| C4 | **Silent failures** (200 but wrong) | success path must still verify |
-| C5 | **Conflicts / insufficient balance** | optimistic apply must be reversible |
-| C6 | **Per-employee / per-location** cells | cache keyed by cell, many rows per employee |
+| #   | Challenge                                                        | Where it bites                                                 |
+| --- | ---------------------------------------------------------------- | -------------------------------------------------------------- |
+| C1  | Balance refreshes **underneath** an open session (bonus trigger) | reconcile vs in-flight mutation                                |
+| C2  | Per-cell read is the **authoritative** truth for a cell          | post-write re-read, manager decision                           |
+| C3  | Batch corpus is **expensive**                                    | can't poll it tightly; used for hydration + periodic reconcile |
+| C4  | **Silent failures** (200 but wrong)                              | success path must still verify                                 |
+| C5  | **Conflicts / insufficient balance**                             | optimistic apply must be reversible                            |
+| C6  | **Per-employee / per-location** cells                            | cache keyed by cell, many rows per employee                    |
 
 ## 3. Proposed solution
 
@@ -108,7 +108,7 @@ then verify against the SoT, and recover *honestly* when the SoT disagrees.
 ### Manager path
 
 - Opening / acting on a request triggers an **authoritative re-read of the relevant cell**
-  (C2), so the decision is made against the balance valid *at that moment*.
+  (C2), so the decision is made against the balance valid _at that moment_.
 - Approve/deny is blocked when the cell is obviously stale (version moved since the queue was
   loaded) — the manager is asked to re-read before deciding, preventing a decision on a value
   the SoT has already changed.
@@ -178,15 +178,15 @@ all server state lives in **React Query**.
 What each layer protects, and why:
 
 - **Mock HCM integration tests (Vitest, unit project, against MSW handlers)** — protect the
-  *contract and the branches*: success, conflict, insufficient-balance, silent-wrong, variable
+  _contract and the branches_: success, conflict, insufficient-balance, silent-wrong, variable
   latency, and bonus-applied. If these drift, every layer above is testing a fiction.
-- **Hook tests (`renderHook` + MSW)** — protect the *reconciliation logic*: optimistic apply,
+- **Hook tests (`renderHook` + MSW)** — protect the _reconciliation logic_: optimistic apply,
   rollback on conflict/insufficient, silent-wrong detection on the success path, and reconcile
   that respects an in-flight mutation. This is where the hard decisions in §4 are enforced.
-- **Storybook component stories** — protect *every visual state* in isolation, including the
+- **Storybook component stories** — protect _every visual state_ in isolation, including the
   uncomfortable ones (rolled-back, hcm-rejected, silently-wrong, refreshed-mid-session).
-- **Storybook interaction tests (play functions, addon-vitest)** — protect the *user-visible
-  flows* end to end against the mock: submit → optimistic → rollback; manager approving with a
+- **Storybook interaction tests (play functions, addon-vitest)** — protect the _user-visible
+  flows_ end to end against the mock: submit → optimistic → rollback; manager approving with a
   changed balance; bonus applied mid-session reconciling the UI.
 
 ### States to cover explicitly
@@ -199,4 +199,7 @@ Manager view: `empty`, `pending-balance-ok`, `pending-balance-insufficient`,
 
 Coverage is gated on the data-layer hooks and the mock HCM branches (FASE 5); the report is
 documented in the README.
+
+```
+
 ```

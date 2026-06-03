@@ -2,17 +2,17 @@
 
 Example application built with the following stack:
 
-| Area | Technology |
-|------|------------|
-| Framework | [Next.js 16](https://nextjs.org/) (App Router) |
-| Language | TypeScript |
-| Styling | [Tailwind CSS v4](https://tailwindcss.com/) |
-| Global state | [Jotai](https://jotai.org/) |
-| Data fetching | [TanStack React Query v5](https://tanstack.com/query) |
-| Component docs | [Storybook 10](https://storybook.js.org/) |
-| Tests | [Vitest](https://vitest.dev/) + React Testing Library |
-| Stories as tests | `@storybook/addon-vitest` (browser mode via Playwright) |
-| API mocking | [MSW](https://mswjs.io/) (tests, Storybook and browser dev) |
+| Area             | Technology                                                  |
+| ---------------- | ----------------------------------------------------------- |
+| Framework        | [Next.js 16](https://nextjs.org/) (App Router)              |
+| Language         | TypeScript                                                  |
+| Styling          | [Tailwind CSS v4](https://tailwindcss.com/)                 |
+| Global state     | [Jotai](https://jotai.org/)                                 |
+| Data fetching    | [TanStack React Query v5](https://tanstack.com/query)       |
+| Component docs   | [Storybook 10](https://storybook.js.org/)                   |
+| Tests            | [Vitest](https://vitest.dev/) + React Testing Library       |
+| Stories as tests | `@storybook/addon-vitest` (browser mode via Playwright)     |
+| API mocking      | [MSW](https://mswjs.io/) (tests, Storybook and browser dev) |
 
 ## Getting started
 
@@ -23,18 +23,18 @@ npm run dev          # http://localhost:3000
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Development server |
-| `npm run build` | Production build |
-| `npm run start` | Serve the production build |
-| `npm run lint` | ESLint |
-| `npm run storybook` | Storybook at http://localhost:6006 |
-| `npm run build-storybook` | Static Storybook build |
-| `npm test` | Vitest in watch mode (unit + stories) |
-| `npm run test:run` | Single-run Vitest (unit + stories in browser mode) |
-| `npm run test:unit` | Unit tests only (jsdom) |
-| `npm run test:coverage` | Unit tests with v8 coverage (data layer + mock HCM) |
+| Command                   | Description                                         |
+| ------------------------- | --------------------------------------------------- |
+| `npm run dev`             | Development server                                  |
+| `npm run build`           | Production build                                    |
+| `npm run start`           | Serve the production build                          |
+| `npm run lint`            | ESLint                                              |
+| `npm run storybook`       | Storybook at http://localhost:6006                  |
+| `npm run build-storybook` | Static Storybook build                              |
+| `npm test`                | Vitest in watch mode (unit + stories)               |
+| `npm run test:run`        | Single-run Vitest (unit + stories in browser mode)  |
+| `npm run test:unit`       | Unit tests only (jsdom)                             |
+| `npm run test:coverage`   | Unit tests with v8 coverage (data layer + mock HCM) |
 
 ## Structure
 
@@ -108,12 +108,12 @@ including the failure paths, with interaction tests under `@storybook/addon-vite
 With the dev server running, the mock HCM is controllable from the browser console:
 
 ```js
-hcm.bonus()                       // anniversary bonus on e1/us (+5); reconcile shows "Refreshed"
-hcm.bonus('e1', 'de', 3)          // bonus on a specific cell/amount
-hcm.failNext('insufficient-balance')  // next file request on e1/us is rejected
-hcm.failNext('conflict')              // next write conflicts (version moved)
-hcm.failNext('silent-wrong')          // next write returns 200 but a wrong balance
-hcm.reset()                       // reset the mock to its default seed
+hcm.bonus(); // anniversary bonus on e1/us (+5); reconcile shows "Refreshed"
+hcm.bonus('e1', 'de', 3); // bonus on a specific cell/amount
+hcm.failNext('insufficient-balance'); // next file request on e1/us is rejected
+hcm.failNext('conflict'); // next write conflicts (version moved)
+hcm.failNext('silent-wrong'); // next write returns 200 but a wrong balance
+hcm.reset(); // reset the mock to its default seed
 ```
 
 To see the **anniversary bonus mid-session**: open `/time-off`, run `hcm.bonus()`, and within a

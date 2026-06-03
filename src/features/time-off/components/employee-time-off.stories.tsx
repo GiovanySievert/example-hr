@@ -5,12 +5,7 @@ import { delay, http, HttpResponse } from 'msw';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { Toaster } from '@/shared/components/toast';
-import {
-  hcmHandlers,
-  hcmStore,
-  resetHcmStore,
-  setLatencyEnabled,
-} from '@/mocks/hcm';
+import { hcmHandlers, hcmStore, resetHcmStore, setLatencyEnabled } from '@/mocks/hcm';
 
 import { EmployeeTimeOff } from './employee-time-off';
 
@@ -78,26 +73,19 @@ async function submitTwoDays(canvasElement: HTMLElement) {
   const daysInput = await canvas.findByLabelText('Days');
   await userEvent.clear(daysInput);
   await userEvent.type(daysInput, '2');
-  await userEvent.click(
-    await canvas.findByRole('button', { name: /request time off/i }),
-  );
+  await userEvent.click(await canvas.findByRole('button', { name: /request time off/i }));
 }
 
 export const HcmRejectedInsufficient: Story = {
   beforeEach: () => {
     resetHcmStore();
     setLatencyEnabled(false);
-    hcmStore.setNextWriteBehavior(
-      { employeeId: 'e1', locationId: 'us' },
-      'insufficient-balance',
-    );
+    hcmStore.setNextWriteBehavior({ employeeId: 'e1', locationId: 'us' }, 'insufficient-balance');
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await submitTwoDays(canvasElement);
-    await waitFor(() =>
-      expect(canvas.getByText('Request not filed')).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(canvas.getByText('Request not filed')).toBeInTheDocument());
     await waitFor(() => expect(canvas.getByText('12')).toBeInTheDocument());
   },
 };
@@ -106,18 +94,13 @@ export const HcmSilentlyWrong: Story = {
   beforeEach: () => {
     resetHcmStore();
     setLatencyEnabled(false);
-    hcmStore.setNextWriteBehavior(
-      { employeeId: 'e1', locationId: 'us' },
-      'silent-wrong',
-    );
+    hcmStore.setNextWriteBehavior({ employeeId: 'e1', locationId: 'us' }, 'silent-wrong');
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await submitTwoDays(canvasElement);
     await waitFor(() =>
-      expect(
-        canvas.getByText('Request could not be confirmed'),
-      ).toBeInTheDocument(),
+      expect(canvas.getByText('Request could not be confirmed')).toBeInTheDocument(),
     );
     await waitFor(() => expect(canvas.getByText('12')).toBeInTheDocument());
   },
@@ -133,12 +116,7 @@ export const BalanceRefreshedMidSession: Story = {
     const canvas = within(canvasElement);
     await canvas.findByText('12');
     hcmStore.applyAnniversaryBonus({ employeeId: 'e1', locationId: 'us' }, 5);
-    await waitFor(
-      () => expect(canvas.getByText('17')).toBeInTheDocument(),
-      { timeout: 5000 },
-    );
-    await waitFor(() =>
-      expect(canvas.getByText('Refreshed')).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(canvas.getByText('17')).toBeInTheDocument(), { timeout: 5000 });
+    await waitFor(() => expect(canvas.getByText('Refreshed')).toBeInTheDocument());
   },
 };

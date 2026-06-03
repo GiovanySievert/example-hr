@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Typography,
-} from '@/shared/components';
+import { Card, CardContent, CardHeader, CardTitle, Typography } from '@/shared/components';
 
 import type { Balance } from '../api/types';
 

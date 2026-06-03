@@ -32,9 +32,9 @@ describe('hcm-client', () => {
   });
 
   it('throws HcmRequestError on a missing cell read', async () => {
-    await expect(
-      fetchBalance({ employeeId: 'nobody', locationId: 'mars' }),
-    ).rejects.toBeInstanceOf(HcmRequestError);
+    await expect(fetchBalance({ employeeId: 'nobody', locationId: 'mars' })).rejects.toBeInstanceOf(
+      HcmRequestError,
+    );
   });
 
   it('approves and denies requests', async () => {

@@ -1,10 +1,4 @@
-import type {
-  Balance,
-  BalanceCell,
-  FileTimeOffPayload,
-  HcmError,
-  TimeOffRequest,
-} from './types';
+import type { Balance, BalanceCell, FileTimeOffPayload, HcmError, TimeOffRequest } from './types';
 
 export class HcmRequestError extends Error {
   readonly status: number;

@@ -1,7 +1,7 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { fn } from 'storybook/test'
+import type { Meta, StoryObj } from '@storybook/nextjs-vite';
+import { fn } from 'storybook/test';
 
-import { PendingApprovalRow } from './pending-approval-row'
+import { PendingApprovalRow } from './pending-approval-row';
 
 const request = {
   id: 'r1',
@@ -10,8 +10,8 @@ const request = {
   days: 2,
   status: 'pending' as const,
   createdAt: '2026-06-03T00:00:00.000Z',
-  updatedAt: '2026-06-03T00:00:00.000Z'
-}
+  updatedAt: '2026-06-03T00:00:00.000Z',
+};
 
 const balance = {
   employeeId: 'e1',
@@ -19,8 +19,8 @@ const balance = {
   available: 12,
   pending: 2,
   version: 1,
-  updatedAt: '2026-06-03T00:00:00.000Z'
-}
+  updatedAt: '2026-06-03T00:00:00.000Z',
+};
 
 const meta = {
   title: 'TimeOff/PendingApprovalRow',
@@ -33,30 +33,30 @@ const meta = {
     locationLabel: 'United States',
     onApprove: fn(),
     onDeny: fn(),
-    onRefresh: fn()
-  }
-} satisfies Meta<typeof PendingApprovalRow>
+    onRefresh: fn(),
+  },
+} satisfies Meta<typeof PendingApprovalRow>;
 
-export default meta
+export default meta;
 
-type Story = StoryObj<typeof meta>
+type Story = StoryObj<typeof meta>;
 
-export const BalanceOk: Story = {}
+export const BalanceOk: Story = {};
 
 export const BalanceInsufficient: Story = {
   args: {
-    request: { ...request, days: 99 }
-  }
-}
+    request: { ...request, days: 99 },
+  },
+};
 
 export const BalanceLoading: Story = {
-  args: { balance: undefined, balanceLoading: true }
-}
+  args: { balance: undefined, balanceLoading: true },
+};
 
 export const Stale: Story = {
-  args: { stale: true }
-}
+  args: { stale: true },
+};
 
 export const Deciding: Story = {
-  args: { deciding: true }
-}
+  args: { deciding: true },
+};

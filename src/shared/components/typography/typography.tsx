@@ -1,14 +1,6 @@
 import type { ElementType } from 'react';
 
-type Variant =
-  | 'h1'
-  | 'h2'
-  | 'h3'
-  | 'h4'
-  | 'body'
-  | 'lead'
-  | 'small'
-  | 'muted';
+type Variant = 'h1' | 'h2' | 'h3' | 'h4' | 'body' | 'lead' | 'small' | 'muted';
 
 const variantClasses: Record<Variant, string> = {
   h1: 'text-4xl font-bold tracking-tight text-foreground',
@@ -37,18 +29,8 @@ type TypographyProps = React.HTMLAttributes<HTMLElement> & {
   as?: ElementType;
 };
 
-export function Typography({
-  variant = 'body',
-  as,
-  className = '',
-  ...props
-}: TypographyProps) {
+export function Typography({ variant = 'body', as, className = '', ...props }: TypographyProps) {
   const Component = as ?? defaultTag[variant];
 
-  return (
-    <Component
-      className={`${variantClasses[variant]} ${className}`}
-      {...props}
-    />
-  );
+  return <Component className={`${variantClasses[variant]} ${className}`} {...props} />;
 }

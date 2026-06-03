@@ -16,10 +16,9 @@ beforeEach(() => {
 describe('balance query hooks', () => {
   it('useBalance reads a single authoritative cell', async () => {
     const { Wrapper } = createWrapper();
-    const { result } = renderHook(
-      () => useBalance({ employeeId: 'e1', locationId: 'us' }),
-      { wrapper: Wrapper },
-    );
+    const { result } = renderHook(() => useBalance({ employeeId: 'e1', locationId: 'us' }), {
+      wrapper: Wrapper,
+    });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.available).toBe(12);
   });

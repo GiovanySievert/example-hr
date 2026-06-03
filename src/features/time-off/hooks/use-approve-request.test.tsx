@@ -34,9 +34,7 @@ describe('useApproveRequest', () => {
     result.current.mutate(REQUEST);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    const cached = queryClient.getQueryData<Balance>(
-      timeOffKeys.balance(REQUEST),
-    );
+    const cached = queryClient.getQueryData<Balance>(timeOffKeys.balance(REQUEST));
     expect(cached?.pending).toBe(0);
     expect(hcmStore.getRequest('r1')?.status).toBe('approved');
   });
@@ -61,9 +59,7 @@ describe('useDenyRequest', () => {
     result.current.mutate(REQUEST);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    const cached = queryClient.getQueryData<Balance>(
-      timeOffKeys.balance(REQUEST),
-    );
+    const cached = queryClient.getQueryData<Balance>(timeOffKeys.balance(REQUEST));
     expect(cached?.available).toBe(14);
     expect(hcmStore.getRequest('r1')?.status).toBe('denied');
   });

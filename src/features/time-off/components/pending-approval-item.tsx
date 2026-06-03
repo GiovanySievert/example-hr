@@ -13,10 +13,7 @@ type PendingApprovalItemProps = {
   locationLabel?: string;
 };
 
-export function PendingApprovalItem({
-  request,
-  locationLabel,
-}: PendingApprovalItemProps) {
+export function PendingApprovalItem({ request, locationLabel }: PendingApprovalItemProps) {
   const cell = {
     employeeId: request.employeeId,
     locationId: request.locationId,

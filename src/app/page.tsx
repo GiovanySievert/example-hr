@@ -8,8 +8,8 @@ export default function Home() {
       <div className="flex flex-col gap-2">
         <Typography variant="h1">ExampleHR</Typography>
         <Typography variant="lead">
-          Time-off balances presented and orchestrated by ExampleHR, with the HCM
-          as the source of truth.
+          Time-off balances presented and orchestrated by ExampleHR, with the HCM as the source of
+          truth.
         </Typography>
       </div>
       <div className="flex flex-wrap gap-4">
