@@ -41,7 +41,7 @@ describe('GET /api/hcm/balance (per-cell read)', () => {
       employeeId: 'e1',
       locationId: 'us',
       available: 12,
-      pending: 0,
+      pending: 2,
       version: 1,
     });
   });
@@ -64,7 +64,7 @@ describe('GET /api/hcm/balances (corpus)', () => {
     const res = await fetch('/api/hcm/balances');
     expect(res.status).toBe(200);
     const balances = (await res.json()) as Balance[];
-    expect(balances).toHaveLength(3);
+    expect(balances).toHaveLength(6);
   });
 });
 
@@ -74,7 +74,7 @@ describe('POST /api/hcm/balance (write)', () => {
     expect(res.status).toBe(200);
     const balance = (await res.json()) as Balance;
     expect(balance.available).toBe(9);
-    expect(balance.pending).toBe(3);
+    expect(balance.pending).toBe(5);
     expect(balance.version).toBe(2);
   });
 
@@ -104,7 +104,7 @@ describe('POST /api/hcm/balance (write)', () => {
     expect(res.status).toBe(200);
     const balance = (await res.json()) as Balance;
     expect(balance.available).toBe(12);
-    expect(balance.pending).toBe(0);
+    expect(balance.pending).toBe(2);
     expect(balance.version).toBe(1);
 
     const reread = (await (await getBalance('e1', 'us')).json()) as Balance;

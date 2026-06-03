@@ -48,7 +48,35 @@ type Story = StoryObj<typeof meta>;
 
 export const PendingBalanceOk: Story = {};
 
+function seedSingleRequest() {
+  resetHcmStore({
+    balances: [
+      {
+        employeeId: 'e1',
+        locationId: 'us',
+        available: 12,
+        pending: 2,
+        version: 1,
+        updatedAt: NOW,
+      },
+    ],
+    requests: [
+      {
+        id: 'r1',
+        employeeId: 'e1',
+        locationId: 'us',
+        days: 2,
+        status: TimeOffRequestStatus.Pending,
+        createdAt: NOW,
+        updatedAt: NOW,
+      },
+    ],
+  });
+  setLatencyEnabled(false);
+}
+
 export const ApprovalSuccess: Story = {
+  beforeEach: seedSingleRequest,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const approve = await canvas.findByRole('button', { name: 'Approve' });
@@ -61,6 +89,7 @@ export const ApprovalSuccess: Story = {
 };
 
 export const Denial: Story = {
+  beforeEach: seedSingleRequest,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(await canvas.findByRole('button', { name: 'Deny' }));
@@ -71,6 +100,7 @@ export const Denial: Story = {
 };
 
 export const BalanceChangedBeforeApprove: Story = {
+  beforeEach: seedSingleRequest,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const approve = await canvas.findByRole('button', { name: 'Approve' });

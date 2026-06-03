@@ -28,44 +28,48 @@ export function cellKey({ employeeId, locationId }: BalanceCell): string {
 
 const FIXED_NOW = '2026-06-03T00:00:00.000Z';
 
+function balance(
+  employeeId: string,
+  locationId: string,
+  available: number,
+  pending: number,
+): Balance {
+  return { employeeId, locationId, available, pending, version: 1, updatedAt: FIXED_NOW };
+}
+
+function pendingRequest(
+  id: string,
+  employeeId: string,
+  locationId: string,
+  days: number,
+): TimeOffRequest {
+  return {
+    id,
+    employeeId,
+    locationId,
+    days,
+    status: TimeOffRequestStatus.Pending,
+    createdAt: FIXED_NOW,
+    updatedAt: FIXED_NOW,
+  };
+}
+
 export function defaultSeed(): Seed {
   return {
     balances: [
-      {
-        employeeId: 'e1',
-        locationId: 'us',
-        available: 12,
-        pending: 0,
-        version: 1,
-        updatedAt: FIXED_NOW,
-      },
-      {
-        employeeId: 'e1',
-        locationId: 'de',
-        available: 3,
-        pending: 1,
-        version: 1,
-        updatedAt: FIXED_NOW,
-      },
-      {
-        employeeId: 'e2',
-        locationId: 'us',
-        available: 20,
-        pending: 0,
-        version: 1,
-        updatedAt: FIXED_NOW,
-      },
+      balance('e1', 'us', 12, 2),
+      balance('e1', 'de', 3, 1),
+      balance('e2', 'us', 20, 5),
+      balance('e2', 'de', 8, 0),
+      balance('e3', 'us', 1, 0),
+      balance('e3', 'br', 15, 3),
     ],
     requests: [
-      {
-        id: 'r1',
-        employeeId: 'e1',
-        locationId: 'us',
-        days: 2,
-        status: TimeOffRequestStatus.Pending,
-        createdAt: FIXED_NOW,
-        updatedAt: FIXED_NOW,
-      },
+      pendingRequest('r1', 'e1', 'us', 2),
+      pendingRequest('r2', 'e1', 'de', 1),
+      pendingRequest('r3', 'e2', 'us', 5),
+      pendingRequest('r4', 'e3', 'us', 4),
+      pendingRequest('r5', 'e3', 'br', 3),
     ],
   };
 }

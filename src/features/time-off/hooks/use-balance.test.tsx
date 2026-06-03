@@ -28,7 +28,7 @@ describe('balance query hooks', () => {
     const { Wrapper } = createWrapper();
     const { result } = renderHook(() => useBalances(), { wrapper: Wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toHaveLength(3);
+    expect(result.current.data).toHaveLength(6);
   });
 
   it('usePendingRequests filters to pending only', async () => {

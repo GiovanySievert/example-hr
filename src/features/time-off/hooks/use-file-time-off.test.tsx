@@ -35,7 +35,7 @@ describe('useFileTimeOff', () => {
 
     const cached = queryClient.getQueryData<Balance>(timeOffKeys.balance(CELL));
     expect(cached?.available).toBe(9);
-    expect(cached?.pending).toBe(3);
+    expect(cached?.pending).toBe(5);
     expect(cached?.version).toBe(2);
   });
 
