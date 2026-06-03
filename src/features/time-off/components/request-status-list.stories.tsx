@@ -32,6 +32,7 @@ export const Mixed: Story = {
       { ...base, id: 'r1', days: 2, status: TimeOffRequestStatus.Pending },
       { ...base, id: 'r2', days: 1, status: TimeOffRequestStatus.Approved },
       { ...base, id: 'r3', days: 3, status: TimeOffRequestStatus.Denied, locationId: 'de' },
+      { ...base, id: 'r4', days: 1, status: TimeOffRequestStatus.Cancelled, locationId: 'de' },
     ],
   },
 };

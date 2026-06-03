@@ -12,8 +12,8 @@ import { BalanceCardStatus } from '../api/enums';
 import { useBalances } from '../hooks/use-balances';
 import { useCancelRequest } from '../hooks/use-cancel-request';
 import { useFileTimeOff } from '../hooks/use-file-time-off';
-import { usePendingRequests } from '../hooks/use-pending-requests';
 import { useReconcile } from '../hooks/use-reconcile';
+import { useRequests } from '../hooks/use-requests';
 import {
   acknowledgeCellRefreshedAtom,
   inFlightCellsAtom,
@@ -38,7 +38,7 @@ type EmployeeTimeOffProps = {
 export function EmployeeTimeOff({ employeeId, reconcileIntervalMs }: EmployeeTimeOffProps) {
   useReconcile(reconcileIntervalMs ? { intervalMs: reconcileIntervalMs } : undefined);
   const balancesQuery = useBalances();
-  const requestsQuery = usePendingRequests();
+  const requestsQuery = useRequests();
   const fileTimeOff = useFileTimeOff();
   const cancelRequest = useCancelRequest();
 
@@ -103,7 +103,7 @@ export function EmployeeTimeOff({ employeeId, reconcileIntervalMs }: EmployeeTim
         ))}
       </section>
 
-      <section className="flex flex-wrap gap-8">
+      <section className="flex flex-wrap items-start gap-8">
         <TimeOffRequestForm
           locations={locations}
           submitting={fileTimeOff.isPending}

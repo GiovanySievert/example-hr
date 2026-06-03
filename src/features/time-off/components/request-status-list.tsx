@@ -18,8 +18,11 @@ type RequestStatusListProps = {
 
 function EmptyRequests() {
   return (
-    <Card className="w-full max-w-sm">
-      <CardContent className="p-6">
+    <Card className="w-full max-w-sm self-start">
+      <CardHeader>
+        <CardTitle>Your requests</CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0">
         <Typography variant="muted">No requests yet.</Typography>
       </CardContent>
     </Card>
@@ -37,7 +40,7 @@ export function RequestStatusList({
   }
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-sm self-start">
       <CardHeader>
         <CardTitle>Your requests</CardTitle>
       </CardHeader>

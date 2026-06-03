@@ -13,6 +13,7 @@ import {
   WriteBehavior,
 } from '@/mocks/hcm';
 
+import { TimeOffRequestStatus } from '../api/enums';
 import { EmployeeTimeOff } from './employee-time-off';
 
 function withProviders(Story: () => React.ReactElement) {
@@ -50,6 +51,8 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
+const NOW = '2026-06-03T00:00:00.000Z';
+
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -71,11 +74,72 @@ export const CancelPendingRequest: Story = {
     await expect(
       await canvas.findByText('Request cancelled', undefined, { timeout: 5000 }),
     ).toBeInTheDocument();
-    await waitFor(() =>
-      expect(canvas.queryByText('2 day(s) · United States')).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(canvas.getByText('Cancelled')).toBeInTheDocument());
     await expect(canvas.getByText('1 day(s) · Germany')).toBeInTheDocument();
     await waitFor(() => expect(canvas.getByText('14')).toBeInTheDocument());
+  },
+};
+
+export const RequestHistory: Story = {
+  beforeEach: () => {
+    resetHcmStore({
+      balances: [
+        {
+          employeeId: 'e1',
+          locationId: 'us',
+          available: 14,
+          pending: 0,
+          version: 2,
+          updatedAt: NOW,
+        },
+        {
+          employeeId: 'e1',
+          locationId: 'de',
+          available: 3,
+          pending: 0,
+          version: 2,
+          updatedAt: NOW,
+        },
+      ],
+      requests: [
+        {
+          id: 'r1',
+          employeeId: 'e1',
+          locationId: 'us',
+          days: 2,
+          status: TimeOffRequestStatus.Approved,
+          createdAt: NOW,
+          updatedAt: NOW,
+        },
+        {
+          id: 'r2',
+          employeeId: 'e1',
+          locationId: 'de',
+          days: 1,
+          status: TimeOffRequestStatus.Denied,
+          createdAt: NOW,
+          updatedAt: NOW,
+        },
+        {
+          id: 'r3',
+          employeeId: 'e1',
+          locationId: 'us',
+          days: 1,
+          status: TimeOffRequestStatus.Cancelled,
+          createdAt: NOW,
+          updatedAt: NOW,
+        },
+      ],
+    });
+    setLatencyEnabled(false);
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(await canvas.findByText('Approved')).toBeInTheDocument();
+    await expect(await canvas.findByText('Denied')).toBeInTheDocument();
+    await expect(await canvas.findByText('Cancelled')).toBeInTheDocument();
+    await expect(canvas.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
   },
 };
 
