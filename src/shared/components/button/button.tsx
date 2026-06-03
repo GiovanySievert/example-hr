@@ -3,9 +3,9 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variants = {
-  primary: 'bg-foreground text-background hover:opacity-90',
+  primary: 'bg-primary text-primary-foreground hover:opacity-90',
   secondary:
-    'border border-black/[.08] hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]',
+    'border border-border bg-secondary text-secondary-foreground hover:opacity-90',
 };
 
 export function Button({

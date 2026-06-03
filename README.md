@@ -1,20 +1,20 @@
 # ExampleHR
 
-Aplicação de exemplo construída com a seguinte stack:
+Example application built with the following stack:
 
-| Área | Tecnologia |
+| Area | Technology |
 |------|------------|
 | Framework | [Next.js 16](https://nextjs.org/) (App Router) |
-| Linguagem | TypeScript |
-| Estilo | [Tailwind CSS v4](https://tailwindcss.com/) |
-| Estado global | [Jotai](https://jotai.org/) |
+| Language | TypeScript |
+| Styling | [Tailwind CSS v4](https://tailwindcss.com/) |
+| Global state | [Jotai](https://jotai.org/) |
 | Data fetching | [TanStack React Query v5](https://tanstack.com/query) |
-| Documentação de componentes | [Storybook 10](https://storybook.js.org/) |
-| Testes | [Vitest](https://vitest.dev/) + React Testing Library |
-| Stories como testes | `@storybook/addon-vitest` (browser mode via Playwright) |
-| Mock de API | [MSW](https://mswjs.io/) (testes, Storybook e browser dev) |
+| Component docs | [Storybook 10](https://storybook.js.org/) |
+| Tests | [Vitest](https://vitest.dev/) + React Testing Library |
+| Stories as tests | `@storybook/addon-vitest` (browser mode via Playwright) |
+| API mocking | [MSW](https://mswjs.io/) (tests, Storybook and browser dev) |
 
-## Começando
+## Getting started
 
 ```bash
 npm install
@@ -23,51 +23,60 @@ npm run dev          # http://localhost:3000
 
 ## Scripts
 
-| Comando | Descrição |
-|---------|-----------|
-| `npm run dev` | Servidor de desenvolvimento |
-| `npm run build` | Build de produção |
-| `npm run start` | Servir o build de produção |
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm run start` | Serve the production build |
 | `npm run lint` | ESLint |
-| `npm run storybook` | Storybook em http://localhost:6006 |
-| `npm run build-storybook` | Build estático do Storybook |
-| `npm test` | Vitest em watch (unit + stories) |
-| `npm run test:run` | Vitest single-run (unit + stories no browser mode) |
-| `npm run test:unit` | Apenas os testes unitários (jsdom) |
+| `npm run storybook` | Storybook at http://localhost:6006 |
+| `npm run build-storybook` | Static Storybook build |
+| `npm test` | Vitest in watch mode (unit + stories) |
+| `npm run test:run` | Single-run Vitest (unit + stories in browser mode) |
+| `npm run test:unit` | Unit tests only (jsdom) |
 
-## Estrutura
+## Structure
 
 ```
 src/
   app/
-    layout.tsx        # envolve a árvore com <Providers>
+    layout.tsx        # wraps the tree with <Providers>
     providers.tsx     # React Query + Jotai + Devtools (Client Component)
     page.tsx
-  features/           # features por domínio (components / hooks / api)
+  features/           # domain features (components / hooks / api)
   shared/
-    components/       # componentes reutilizáveis entre features
+    theme.ts          # color and radius tokens (source of truth)
+    components/        # components reused across features
       button/
   lib/
-    query-client.ts   # factory do QueryClient
-    store.ts          # átomos Jotai
+    query-client.ts   # QueryClient factory
+    store.ts          # Jotai atoms
   mocks/
-    handlers.ts       # handlers MSW compartilhados
-    server.ts         # MSW para Node (Vitest)
-    browser.ts        # MSW para o navegador (dev)
-.storybook/           # config do Storybook (MSW + Tailwind)
-vitest.config.ts      # projetos "unit" (jsdom) e "storybook" (browser)
+    handlers.ts       # shared MSW handlers
+    server.ts         # MSW for Node (Vitest)
+    browser.ts        # MSW for the browser (dev)
+.storybook/           # Storybook config (MSW + Tailwind)
+vitest.config.ts      # "unit" (jsdom) and "storybook" (browser) projects
 vitest.setup.ts       # RTL matchers + MSW server
-public/mockServiceWorker.js  # worker MSW (gerado)
+public/mockServiceWorker.js  # MSW worker (generated)
 ```
 
-## Mocks de API (MSW)
+## Theming
 
-Os handlers ficam em [`src/mocks/handlers.ts`](src/mocks/handlers.ts) e são reaproveitados
-em três ambientes:
+Color and radius tokens live in [`src/shared/theme.ts`](src/shared/theme.ts) as the source of
+truth. They are mirrored as CSS variables and exposed to Tailwind via `@theme` in
+[`src/app/globals.css`](src/app/globals.css), so utilities like `bg-primary`,
+`text-muted` and `border-border` are available. Avoid Tailwind arbitrary values — use the
+named tokens instead.
 
-- **Testes** — `src/mocks/server.ts` é iniciado em `vitest.setup.ts`.
-- **Storybook** — inicializado em `.storybook/preview.tsx`; sobrescreva por story via
+## API mocking (MSW)
+
+Handlers live in [`src/mocks/handlers.ts`](src/mocks/handlers.ts) and are reused across three
+environments:
+
+- **Tests** — `src/mocks/server.ts` is started in `vitest.setup.ts`.
+- **Storybook** — initialized in `.storybook/preview.tsx`; override per story via
   `parameters.msw.handlers`.
-- **Browser (dev)** — `src/mocks/browser.ts` + `public/mockServiceWorker.js`. O worker já
-  está pronto, mas **não é iniciado por padrão** — chame `worker.start()` quando precisar
-  (por exemplo, atrás de uma flag em desenvolvimento).
+- **Browser (dev)** — `src/mocks/browser.ts` + `public/mockServiceWorker.js`. The worker is
+  ready but **not started by default** — call `worker.start()` when needed (for example behind
+  a development flag).
