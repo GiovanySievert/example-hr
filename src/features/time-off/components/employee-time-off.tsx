@@ -31,10 +31,16 @@ const LOCATION_LABELS: Record<string, string> = {
 
 type EmployeeTimeOffProps = {
   employeeId: string;
+  reconcileIntervalMs?: number;
 };
 
-export function EmployeeTimeOff({ employeeId }: EmployeeTimeOffProps) {
-  useReconcile();
+export function EmployeeTimeOff({
+  employeeId,
+  reconcileIntervalMs,
+}: EmployeeTimeOffProps) {
+  useReconcile(
+    reconcileIntervalMs ? { intervalMs: reconcileIntervalMs } : undefined,
+  );
   const balancesQuery = useBalances();
   const requestsQuery = usePendingRequests();
   const fileTimeOff = useFileTimeOff();

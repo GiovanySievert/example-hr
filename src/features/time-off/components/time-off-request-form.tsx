@@ -1,49 +1,44 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
+import { useState } from 'react'
 
-import { Button, Input, Typography } from '@/shared/components';
+import { Button, Input, Typography } from '@/shared/components'
 
-export type LocationOption = { id: string; label: string };
+export type LocationOption = { id: string; label: string }
 
 type TimeOffRequestFormProps = {
-  locations: LocationOption[];
-  maxDays?: number;
-  submitting?: boolean;
-  onSubmit: (values: { locationId: string; days: number }) => void;
-};
+  locations: LocationOption[]
+  maxDays?: number
+  submitting?: boolean
+  onSubmit: (values: { locationId: string; days: number }) => void
+}
 
-export function TimeOffRequestForm({
-  locations,
-  maxDays,
-  submitting = false,
-  onSubmit,
-}: TimeOffRequestFormProps) {
-  const [locationId, setLocationId] = useState(locations[0]?.id ?? '');
-  const [days, setDays] = useState('1');
-  const [error, setError] = useState<string | null>(null);
+export function TimeOffRequestForm({ locations, maxDays, submitting = false, onSubmit }: TimeOffRequestFormProps) {
+  const [locationId, setLocationId] = useState(locations[0]?.id ?? '')
+  const [days, setDays] = useState('1')
+  const [error, setError] = useState<string | null>(null)
 
   function validate(parsedDays: number): string | null {
-    if (!locationId) return 'Select a location.';
+    if (!locationId) return 'Select a location.'
     if (!Number.isInteger(parsedDays) || parsedDays <= 0) {
-      return 'Enter a whole number of days greater than zero.';
+      return 'Enter a whole number of days greater than zero.'
     }
     if (maxDays !== undefined && parsedDays > maxDays) {
-      return `You only have ${maxDays} day(s) available.`;
+      return `You only have ${maxDays} day(s) available.`
     }
-    return null;
+    return null
   }
 
   function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    const parsedDays = Number(days);
-    const validationError = validate(parsedDays);
+    event.preventDefault()
+    const parsedDays = Number(days)
+    const validationError = validate(parsedDays)
     if (validationError) {
-      setError(validationError);
-      return;
+      setError(validationError)
+      return
     }
-    setError(null);
-    onSubmit({ locationId, days: parsedDays });
+    setError(null)
+    onSubmit({ locationId, days: parsedDays })
   }
 
   return (
@@ -90,5 +85,5 @@ export function TimeOffRequestForm({
         {submitting ? 'Submitting…' : 'Request time off'}
       </Button>
     </form>
-  );
+  )
 }

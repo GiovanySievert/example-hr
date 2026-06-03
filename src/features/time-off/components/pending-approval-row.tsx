@@ -1,25 +1,20 @@
-'use client';
+'use client'
 
-import {
-  Button,
-  Card,
-  CardContent,
-  Typography,
-} from '@/shared/components';
+import { Button, Card, CardContent, Typography } from '@/shared/components'
 
-import type { Balance, TimeOffRequest } from '../api/types';
+import type { Balance, TimeOffRequest } from '../api/types'
 
 type PendingApprovalRowProps = {
-  request: TimeOffRequest;
-  balance?: Balance;
-  locationLabel?: string;
-  balanceLoading?: boolean;
-  stale?: boolean;
-  deciding?: boolean;
-  onApprove: () => void;
-  onDeny: () => void;
-  onRefresh: () => void;
-};
+  request: TimeOffRequest
+  balance?: Balance
+  locationLabel?: string
+  balanceLoading?: boolean
+  stale?: boolean
+  deciding?: boolean
+  onApprove: () => void
+  onDeny: () => void
+  onRefresh: () => void
+}
 
 export function PendingApprovalRow({
   request,
@@ -30,14 +25,11 @@ export function PendingApprovalRow({
   deciding = false,
   onApprove,
   onDeny,
-  onRefresh,
+  onRefresh
 }: PendingApprovalRowProps) {
-  const location =
-    locationLabel ?? request.locationId.toUpperCase();
-  const insufficient =
-    balance !== undefined && request.days > balance.available;
-  const approveDisabled =
-    deciding || stale || balanceLoading || insufficient || !balance;
+  const location = locationLabel ?? request.locationId.toUpperCase()
+  const insufficient = balance !== undefined && request.days > balance.available
+  const approveDisabled = deciding || stale || balanceLoading || insufficient || !balance
 
   return (
     <Card className="w-full max-w-md">
@@ -63,9 +55,7 @@ export function PendingApprovalRow({
 
         {stale ? (
           <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-secondary p-3">
-            <Typography variant="muted">
-              The balance changed since you opened this. Re-read before deciding.
-            </Typography>
+            <Typography variant="muted">The balance changed since you opened this. Re-read before deciding.</Typography>
             <Button variant="secondary" onClick={onRefresh} disabled={deciding}>
               Re-read
             </Button>
@@ -73,9 +63,7 @@ export function PendingApprovalRow({
         ) : null}
 
         {insufficient && !stale ? (
-          <Typography variant="muted">
-            Insufficient available balance for this request.
-          </Typography>
+          <Typography variant="muted">Insufficient available balance for this request.</Typography>
         ) : null}
 
         <div className="flex gap-3">
@@ -88,5 +76,5 @@ export function PendingApprovalRow({
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

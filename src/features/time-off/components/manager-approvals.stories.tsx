@@ -2,8 +2,10 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Provider as JotaiProvider } from 'jotai';
 
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+
 import { Toaster } from '@/shared/components/toast';
-import { resetHcmStore, setLatencyEnabled } from '@/mocks/hcm';
+import { hcmStore, resetHcmStore, setLatencyEnabled } from '@/mocks/hcm';
 
 import { ManagerApprovals } from './manager-approvals';
 
@@ -44,6 +46,41 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const PendingBalanceOk: Story = {};
+
+export const ApprovalSuccess: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const approve = await canvas.findByRole('button', { name: 'Approve' });
+    await waitFor(() => expect(approve).toBeEnabled());
+    await userEvent.click(approve);
+    await expect(
+      await canvas.findByText('Request approved', undefined, { timeout: 5000 }),
+    ).toBeInTheDocument();
+  },
+};
+
+export const Denial: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByRole('button', { name: 'Deny' }));
+    await expect(
+      await canvas.findByText('Request denied', undefined, { timeout: 5000 }),
+    ).toBeInTheDocument();
+  },
+};
+
+export const BalanceChangedBeforeApprove: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const approve = await canvas.findByRole('button', { name: 'Approve' });
+    await waitFor(() => expect(approve).toBeEnabled());
+    hcmStore.approveRequest('r1');
+    await userEvent.click(approve);
+    await expect(
+      await canvas.findByText('Approval failed', undefined, { timeout: 5000 }),
+    ).toBeInTheDocument();
+  },
+};
 
 export const Empty: Story = {
   beforeEach: () => {
