@@ -53,6 +53,11 @@ export function EmployeeTimeOff({ employeeId, reconcileIntervalMs }: EmployeeTim
     [cells],
   );
 
+  const requests = useMemo(
+    () => (requestsQuery.data ?? []).filter((request) => request.employeeId === employeeId),
+    [employeeId, requestsQuery.data],
+  );
+
   function statusFor(cell: Balance): BalanceCardStatus {
     const key = cellKey(cell);
     if (inFlight.has(key)) return BalanceCardStatus.Optimistic;
@@ -93,7 +98,7 @@ export function EmployeeTimeOff({ employeeId, reconcileIntervalMs }: EmployeeTim
           submitting={fileTimeOff.isPending}
           onSubmit={({ locationId, days }) => fileTimeOff.mutate({ employeeId, locationId, days })}
         />
-        <RequestStatusList requests={requestsQuery.data ?? []} locationLabels={LOCATION_LABELS} />
+        <RequestStatusList requests={requests} locationLabels={LOCATION_LABELS} />
       </section>
     </div>
   );

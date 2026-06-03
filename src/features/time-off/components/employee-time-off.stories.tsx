@@ -50,7 +50,16 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {};
+export const Default: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(await canvas.findByText('2 day(s) · United States')).toBeInTheDocument();
+    await expect(await canvas.findByText('1 day(s) · Germany')).toBeInTheDocument();
+    await expect(canvas.queryByText('5 day(s) · United States')).not.toBeInTheDocument();
+    await expect(canvas.queryByText('4 day(s) · United States')).not.toBeInTheDocument();
+    await expect(canvas.queryByText('3 day(s) · Brazil')).not.toBeInTheDocument();
+  },
+};
 
 export const Loading: Story = {
   parameters: {
