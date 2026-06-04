@@ -2,6 +2,7 @@
 
 import { Card, Typography } from '@/shared/components';
 
+import { formatDateRange } from '../api/date-range';
 import type { Balance, TimeOffRequest } from '../api/types';
 import {
   BalanceContext,
@@ -38,15 +39,15 @@ export function PendingApprovalRow({
   const location = locationLabel ?? request.locationId.toUpperCase();
   const insufficient = balance !== undefined && request.days > balance.available;
   const approveDisabled = deciding || stale || balanceLoading || insufficient || !balance;
+  const dateRange = formatDateRange(request.startDate, request.endDate);
+  const requestLabel = `${dateRange ? `${dateRange} · ` : ''}${request.days} day(s) · ${location}`;
 
   return (
     <Card className="w-full">
       <div className="flex flex-col gap-5 p-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-1">
-            <Typography variant="small">
-              {request.days} day(s) · {location}
-            </Typography>
+            <Typography variant="small">{requestLabel}</Typography>
             {showEmployeeLabel ? (
               <Typography variant="muted">Employee {request.employeeId}</Typography>
             ) : null}

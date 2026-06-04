@@ -16,7 +16,11 @@ import {
   type RevertedTimeOffRequest,
 } from '../state';
 
-type FileTimeOffVariables = BalanceCell & { days: number };
+type FileTimeOffVariables = BalanceCell & {
+  startDate: string;
+  endDate: string;
+  days: number;
+};
 
 type MutationContext = {
   previous?: Balance;
@@ -40,12 +44,20 @@ function isSilentlyWrong(before: Balance, authoritative: Balance, days: number):
   );
 }
 
-function makeRolledBackRequest({ employeeId, locationId, days }: FileTimeOffVariables) {
+function makeRolledBackRequest({
+  employeeId,
+  locationId,
+  startDate,
+  endDate,
+  days,
+}: FileTimeOffVariables) {
   const now = new Date().toISOString();
   return {
     id: `reverted-${employeeId}-${locationId}-${Date.now()}`,
     employeeId,
     locationId,
+    startDate,
+    endDate,
     days,
     status: TimeOffRequestStatus.Pending,
     createdAt: now,
@@ -62,11 +74,11 @@ export function useFileTimeOff() {
   const addRolledBackRequest = useSetAtom(addRolledBackRequestAtom);
 
   return useMutation<Balance, Error, FileTimeOffVariables, MutationContext>({
-    mutationFn: async ({ employeeId, locationId, days }) => {
+    mutationFn: async ({ employeeId, locationId, startDate, endDate, days }) => {
       const cell: BalanceCell = { employeeId, locationId };
       const current = queryClient.getQueryData<Balance>(timeOffKeys.balance(cell));
       const expectedVersion = current?.version ?? 0;
-      return fileTimeOff({ employeeId, locationId, days, expectedVersion });
+      return fileTimeOff({ employeeId, locationId, startDate, endDate, days, expectedVersion });
     },
 
     onMutate: async ({ employeeId, locationId, days }) => {
@@ -82,7 +94,8 @@ export function useFileTimeOff() {
       return { previous };
     },
 
-    onError: (error, { employeeId, locationId, days }, context) => {
+    onError: (error, variables, context) => {
+      const { employeeId, locationId } = variables;
       const cell: BalanceCell = { employeeId, locationId };
       const key = timeOffKeys.balance(cell);
       if (context?.previous) {
@@ -98,7 +111,7 @@ export function useFileTimeOff() {
           ? error.body.message
           : 'Could not reach the HCM. Please try again.';
 
-      addRolledBackRequest(makeRolledBackRequest({ employeeId, locationId, days }));
+      addRolledBackRequest(makeRolledBackRequest(variables));
       toast({
         variant: 'error',
         title: 'Request not filed',
@@ -106,7 +119,8 @@ export function useFileTimeOff() {
       });
     },
 
-    onSuccess: async (_data, { employeeId, locationId, days }, context) => {
+    onSuccess: async (_data, variables, context) => {
+      const { employeeId, locationId, days } = variables;
       const cell: BalanceCell = { employeeId, locationId };
       const key = timeOffKeys.balance(cell);
       const authoritative = await fetchBalance(cell);
@@ -114,7 +128,7 @@ export function useFileTimeOff() {
       const before = context?.previous;
       if (before && isSilentlyWrong(before, authoritative, days)) {
         queryClient.setQueryData<Balance>(key, authoritative);
-        addRolledBackRequest(makeRolledBackRequest({ employeeId, locationId, days }));
+        addRolledBackRequest(makeRolledBackRequest(variables));
         toast({
           variant: 'error',
           title: 'Request could not be confirmed',

@@ -47,12 +47,12 @@ export const SwitchEmployee: Story = {
     const canvas = within(canvasElement);
     const employeeSelect = await canvas.findByLabelText('Acting as');
 
-    await expect(await canvas.findByText('2 day(s) · United States')).toBeInTheDocument();
-    await expect(canvas.queryByText('3 day(s) · Brazil')).not.toBeInTheDocument();
+    await expect(await canvas.findByText(/2 day\(s\) · United States/)).toBeInTheDocument();
+    await expect(canvas.queryByText(/3 day\(s\) · Brazil/)).not.toBeInTheDocument();
 
     await userEvent.selectOptions(employeeSelect, 'e3');
 
-    await waitFor(() => expect(canvas.getByText('3 day(s) · Brazil')).toBeInTheDocument());
-    await expect(canvas.queryByText('1 day(s) · Germany')).not.toBeInTheDocument();
+    await waitFor(() => expect(canvas.getByText(/3 day\(s\) · Brazil/)).toBeInTheDocument());
+    await expect(canvas.queryByText(/1 day\(s\) · Germany/)).not.toBeInTheDocument();
   },
 };

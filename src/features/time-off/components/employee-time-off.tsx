@@ -107,7 +107,9 @@ export function EmployeeTimeOff({ employeeId, reconcileIntervalMs }: EmployeeTim
         <TimeOffRequestForm
           locations={locations}
           submitting={fileTimeOff.isPending}
-          onSubmit={({ locationId, days }) => fileTimeOff.mutate({ employeeId, locationId, days })}
+          onSubmit={({ locationId, startDate, endDate, days }) =>
+            fileTimeOff.mutate({ employeeId, locationId, startDate, endDate, days })
+          }
         />
         <RequestStatusList
           requests={requests}

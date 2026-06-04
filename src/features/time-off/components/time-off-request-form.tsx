@@ -4,13 +4,20 @@ import { useState } from 'react';
 
 import { Button, Input, Select, Typography } from '@/shared/components';
 
+import { countBusinessDays } from '../api/date-range';
+
 export type LocationOption = { id: string; label: string };
 
 type TimeOffRequestFormProps = {
   locations: LocationOption[];
   maxDays?: number;
   submitting?: boolean;
-  onSubmit: (values: { locationId: string; days: number }) => void;
+  onSubmit: (values: {
+    locationId: string;
+    startDate: string;
+    endDate: string;
+    days: number;
+  }) => void;
 };
 
 function FormError({ message }: { message: string }) {
@@ -28,13 +35,18 @@ export function TimeOffRequestForm({
   onSubmit,
 }: TimeOffRequestFormProps) {
   const [locationId, setLocationId] = useState(locations[0]?.id ?? '');
-  const [days, setDays] = useState('1');
+  const [startDate, setStartDate] = useState('2026-06-08');
+  const [endDate, setEndDate] = useState('2026-06-09');
   const [error, setError] = useState<string | null>(null);
+
+  const requestedDays = countBusinessDays(startDate, endDate);
 
   function validate(parsedDays: number): string | null {
     if (!locationId) return 'Select a location.';
+    if (!startDate || !endDate) return 'Select a start and end date.';
+    if (startDate > endDate) return 'End date must be on or after start date.';
     if (!Number.isInteger(parsedDays) || parsedDays <= 0) {
-      return 'Enter a whole number of days greater than zero.';
+      return 'Select at least one weekday.';
     }
     if (maxDays !== undefined && parsedDays > maxDays) {
       return `You only have ${maxDays} day(s) available.`;
@@ -44,14 +56,14 @@ export function TimeOffRequestForm({
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    const parsedDays = Number(days);
+    const parsedDays = requestedDays;
     const validationError = validate(parsedDays);
     if (validationError) {
       setError(validationError);
       return;
     }
     setError(null);
-    onSubmit({ locationId, days: parsedDays });
+    onSubmit({ locationId, startDate, endDate, days: parsedDays });
   }
 
   const submitLabel = submitting ? 'Submitting…' : 'Request time off';
@@ -71,18 +83,32 @@ export function TimeOffRequestForm({
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="days" className="text-sm font-medium text-foreground">
-          Days
+        <label htmlFor="start-date" className="text-sm font-medium text-foreground">
+          Start date
         </label>
         <Input
-          id="days"
-          type="number"
-          min={1}
-          step={1}
-          value={days}
-          onChange={(event) => setDays(event.target.value)}
+          id="start-date"
+          type="date"
+          value={startDate}
+          onChange={(event) => setStartDate(event.target.value)}
         />
       </div>
+
+      <div className="flex flex-col gap-1">
+        <label htmlFor="end-date" className="text-sm font-medium text-foreground">
+          End date
+        </label>
+        <Input
+          id="end-date"
+          type="date"
+          value={endDate}
+          onChange={(event) => setEndDate(event.target.value)}
+        />
+      </div>
+
+      <Typography variant="muted">
+        {requestedDays} business day(s) will be submitted for approval.
+      </Typography>
 
       {error ? <FormError message={error} /> : null}
 

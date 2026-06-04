@@ -16,6 +16,8 @@ export type TimeOffRequest = {
   id: string;
   employeeId: string;
   locationId: string;
+  startDate?: string;
+  endDate?: string;
   days: number;
   status: TimeOffRequestStatus;
   createdAt: string;
@@ -29,6 +31,8 @@ export type HcmError = {
 };
 
 export type FileTimeOffPayload = BalanceCell & {
+  startDate: string;
+  endDate: string;
   days: number;
   expectedVersion: number;
 };

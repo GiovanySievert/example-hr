@@ -30,3 +30,7 @@ export const Submitting: Story = {
 export const WithMaxDays: Story = {
   args: { maxDays: 3 },
 };
+
+export const SubmitsBusinessDays: Story = {
+  args: { maxDays: 12 },
+};

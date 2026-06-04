@@ -56,11 +56,11 @@ const NOW = '2026-06-03T00:00:00.000Z';
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(await canvas.findByText('2 day(s) · United States')).toBeInTheDocument();
-    await expect(await canvas.findByText('1 day(s) · Germany')).toBeInTheDocument();
-    await expect(canvas.queryByText('5 day(s) · United States')).not.toBeInTheDocument();
-    await expect(canvas.queryByText('4 day(s) · United States')).not.toBeInTheDocument();
-    await expect(canvas.queryByText('3 day(s) · Brazil')).not.toBeInTheDocument();
+    await expect(await canvas.findByText(/2 day\(s\) · United States/)).toBeInTheDocument();
+    await expect(await canvas.findByText(/1 day\(s\) · Germany/)).toBeInTheDocument();
+    await expect(canvas.queryByText(/5 day\(s\) · United States/)).not.toBeInTheDocument();
+    await expect(canvas.queryByText(/4 day\(s\) · United States/)).not.toBeInTheDocument();
+    await expect(canvas.queryByText(/3 day\(s\) · Brazil/)).not.toBeInTheDocument();
   },
 };
 
@@ -68,14 +68,14 @@ export const CancelPendingRequest: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await expect(await canvas.findByText('2 day(s) · United States')).toBeInTheDocument();
+    await expect(await canvas.findByText(/2 day\(s\) · United States/)).toBeInTheDocument();
     await userEvent.click((await canvas.findAllByRole('button', { name: 'Cancel' }))[0]);
 
     await expect(
       await canvas.findByText('Request cancelled', undefined, { timeout: 5000 }),
     ).toBeInTheDocument();
     await waitFor(() => expect(canvas.getByText('Cancelled')).toBeInTheDocument());
-    await expect(canvas.getByText('1 day(s) · Germany')).toBeInTheDocument();
+    await expect(canvas.getByText(/1 day\(s\) · Germany/)).toBeInTheDocument();
     await waitFor(() => expect(canvas.getByText('14')).toBeInTheDocument());
   },
 };
@@ -106,6 +106,8 @@ export const RequestHistory: Story = {
           id: 'r1',
           employeeId: 'e1',
           locationId: 'us',
+          startDate: '2026-06-08',
+          endDate: '2026-06-09',
           days: 2,
           status: TimeOffRequestStatus.Approved,
           createdAt: NOW,
@@ -115,6 +117,8 @@ export const RequestHistory: Story = {
           id: 'r2',
           employeeId: 'e1',
           locationId: 'de',
+          startDate: '2026-06-10',
+          endDate: '2026-06-10',
           days: 1,
           status: TimeOffRequestStatus.Denied,
           createdAt: NOW,
@@ -124,6 +128,8 @@ export const RequestHistory: Story = {
           id: 'r3',
           employeeId: 'e1',
           locationId: 'us',
+          startDate: '2026-06-11',
+          endDate: '2026-06-11',
           days: 1,
           status: TimeOffRequestStatus.Cancelled,
           createdAt: NOW,
@@ -167,9 +173,10 @@ export const Empty: Story = {
 async function submitTwoDays(canvasElement: HTMLElement) {
   const canvas = within(canvasElement);
   await canvas.findByText('12');
-  const daysInput = await canvas.findByLabelText('Days');
-  await userEvent.clear(daysInput);
-  await userEvent.type(daysInput, '2');
+  await userEvent.clear(await canvas.findByLabelText('Start date'));
+  await userEvent.type(await canvas.findByLabelText('Start date'), '2026-06-08');
+  await userEvent.clear(await canvas.findByLabelText('End date'));
+  await userEvent.type(await canvas.findByLabelText('End date'), '2026-06-09');
   await userEvent.click(await canvas.findByRole('button', { name: /request time off/i }));
 }
 

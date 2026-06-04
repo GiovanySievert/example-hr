@@ -23,6 +23,8 @@ describe('hcm-client', () => {
       fileTimeOff({
         employeeId: 'e1',
         locationId: 'us',
+        startDate: '2026-06-08',
+        endDate: '2026-06-08',
         days: 1,
         expectedVersion: 99,
       }),

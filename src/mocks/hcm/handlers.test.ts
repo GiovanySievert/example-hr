@@ -22,13 +22,19 @@ async function getBalance(employeeId: string, locationId: string) {
 async function fileRequest(body: {
   employeeId: string;
   locationId: string;
+  startDate?: string;
+  endDate?: string;
   days: number;
   expectedVersion: number;
 }) {
   return fetch('/api/hcm/balance', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      startDate: '2026-06-08',
+      endDate: '2026-06-10',
+      ...body,
+    }),
   });
 }
 

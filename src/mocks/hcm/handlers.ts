@@ -64,6 +64,8 @@ export const hcmHandlers = [
     const result = hcmStore.fileRequest({
       employeeId: body.employeeId,
       locationId: body.locationId,
+      startDate: body.startDate,
+      endDate: body.endDate,
       days: body.days,
       expectedVersion: body.expectedVersion,
     });

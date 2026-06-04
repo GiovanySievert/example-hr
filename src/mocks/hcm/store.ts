@@ -37,16 +37,34 @@ function balance(
   return { employeeId, locationId, available, pending, version: 1, updatedAt: FIXED_NOW };
 }
 
+function defaultEndDate(startDate: string, days: number): string {
+  const [year, month, day] = startDate.split('-').map(Number);
+  const current = new Date(Date.UTC(year, month - 1, day));
+  let businessDays = 0;
+
+  while (businessDays < days) {
+    const weekday = current.getUTCDay();
+    if (weekday !== 0 && weekday !== 6) businessDays += 1;
+    if (businessDays < days) current.setUTCDate(current.getUTCDate() + 1);
+  }
+
+  return current.toISOString().slice(0, 10);
+}
+
 function pendingRequest(
   id: string,
   employeeId: string,
   locationId: string,
   days: number,
+  startDate = '2026-06-08',
+  endDate = defaultEndDate(startDate, days),
 ): TimeOffRequest {
   return {
     id,
     employeeId,
     locationId,
+    startDate,
+    endDate,
     days,
     status: TimeOffRequestStatus.Pending,
     createdAt: FIXED_NOW,
@@ -121,6 +139,8 @@ export class HcmStore {
   fileRequest(args: {
     employeeId: string;
     locationId: string;
+    startDate: string;
+    endDate: string;
     days: number;
     expectedVersion: number;
   }): FileRequestResult {
@@ -170,6 +190,8 @@ export class HcmStore {
       id: `r${this.requests.size + 1}-${this.clock}`,
       employeeId: args.employeeId,
       locationId: args.locationId,
+      startDate: args.startDate,
+      endDate: args.endDate,
       days: args.days,
       status: TimeOffRequestStatus.Pending,
       createdAt: updated.updatedAt,

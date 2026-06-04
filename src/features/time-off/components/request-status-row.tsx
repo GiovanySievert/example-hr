@@ -1,5 +1,6 @@
 import { Button, Typography } from '@/shared/components';
 
+import { formatDateRange } from '../api/date-range';
 import { TimeOffRequestStatus } from '../api/enums';
 import type { RequestListItem } from './request-status-list';
 import { StatusBadge } from './status-badge';
@@ -24,13 +25,13 @@ export function RequestStatusRow({
   onCancel,
 }: RequestStatusRowProps) {
   const canCancel = onCancel && !request.reverted && request.status === TimeOffRequestStatus.Pending;
+  const dateRange = formatDateRange(request.startDate, request.endDate);
+  const requestLabel = `${dateRange ? `${dateRange} · ` : ''}${request.days} day(s) · ${locationLabel}`;
 
   return (
     <div className="flex items-center justify-between gap-3 border-b border-border pb-3 last:border-0 last:pb-0">
       <div className="flex flex-col gap-1">
-        <Typography variant="small">
-          {request.days} day(s) · {locationLabel}
-        </Typography>
+        <Typography variant="small">{requestLabel}</Typography>
         {request.reverted ? <RevertedNote /> : null}
       </div>
       <div className="flex items-center gap-2">

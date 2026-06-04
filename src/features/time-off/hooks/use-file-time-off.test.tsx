@@ -12,6 +12,8 @@ import { usePendingRequests } from './use-pending-requests';
 import { createWrapper } from './test-utils';
 
 const CELL = { employeeId: 'e1', locationId: 'us' };
+const ONE_DAY = { ...CELL, startDate: '2026-06-08', endDate: '2026-06-08', days: 1 };
+const THREE_DAYS = { ...CELL, startDate: '2026-06-08', endDate: '2026-06-10', days: 3 };
 
 beforeEach(() => {
   resetHcmStore();
@@ -31,7 +33,7 @@ describe('useFileTimeOff', () => {
 
     const { result } = renderHook(() => useFileTimeOff(), { wrapper: Wrapper });
 
-    result.current.mutate({ ...CELL, days: 3 });
+    result.current.mutate(THREE_DAYS);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -47,7 +49,7 @@ describe('useFileTimeOff', () => {
     hcmStore.setNextWriteBehavior(CELL, WriteBehavior.Conflict);
 
     const { result } = renderHook(() => useFileTimeOff(), { wrapper: Wrapper });
-    result.current.mutate({ ...CELL, days: 1 });
+    result.current.mutate(ONE_DAY);
 
     await waitFor(() => expect(result.current.isError).toBe(true));
 
@@ -62,7 +64,7 @@ describe('useFileTimeOff', () => {
     hcmStore.setNextWriteBehavior(CELL, WriteBehavior.InsufficientBalance);
 
     const { result } = renderHook(() => useFileTimeOff(), { wrapper: Wrapper });
-    result.current.mutate({ ...CELL, days: 1 });
+    result.current.mutate(ONE_DAY);
 
     await waitFor(() => expect(result.current.isError).toBe(true));
 
@@ -79,7 +81,7 @@ describe('useFileTimeOff', () => {
     hcmStore.setNextWriteBehavior(CELL, WriteBehavior.SilentWrong);
 
     const { result } = renderHook(() => useFileTimeOff(), { wrapper: Wrapper });
-    result.current.mutate({ ...CELL, days: 3 });
+    result.current.mutate(THREE_DAYS);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -98,7 +100,7 @@ describe('useFileTimeOff', () => {
     hcmStore.setNextWriteBehavior(CELL, WriteBehavior.SilentWrongPendingMismatch);
 
     const { result } = renderHook(() => useFileTimeOff(), { wrapper: Wrapper });
-    result.current.mutate({ ...CELL, days: 3 });
+    result.current.mutate(THREE_DAYS);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -125,7 +127,7 @@ describe('useFileTimeOff', () => {
 
     await waitFor(() => expect(result.current.pendingRequests.data).toHaveLength(5));
 
-    result.current.fileTimeOff.mutate({ ...CELL, days: 3 });
+    result.current.fileTimeOff.mutate(THREE_DAYS);
 
     await waitFor(() => expect(result.current.fileTimeOff.isSuccess).toBe(true));
     await waitFor(() => expect(result.current.pendingRequests.data).toHaveLength(6));
