@@ -252,3 +252,48 @@ Manager view: `empty`, `pending-balance-ok`, `pending-balance-insufficient`,
 
 Coverage is gated on the data-layer hooks and the mock HCM branches (FASE 5); the report is
 documented in the README.
+
+## 7. Out of scope & future work
+
+This deliverable deliberately scopes down to the problem the brief centres on: presenting balances
+that feel instant while the HCM owns the numbers, and reconciling honestly when the two disagree.
+The data layer, optimistic/reconcile model, and mock HCM are built to production-grade rigour; the
+surrounding product surface of a real time-off system is intentionally not. The items below are the
+gaps a production version would close, ordered by how much they shape the rest of the system.
+
+### Tier 1 — domain model (changes the data shape)
+
+- **Leave types.** A single generic balance is modelled. Real policy splits into vacation, sick,
+  personal/PTO, parental, unpaid, bereavement, etc. — each with its own rules (sick needs no
+  advance notice; some types skip approval). This adds a `leaveType` dimension to the balance cell
+  and the request, so it would land before anything else.
+- **Sub-day granularity.** `days` is an integer. Half-days and hour-level requests need a fractional
+  or minutes-based amount on `Balance` and `TimeOffRequest`, plus matching validation and display.
+- **Accrual, carry-over and expiry.** Balances are seeded as static numbers. A real system accrues
+  N/month from a start date, caps accumulation, carries a bounded amount across the year, and
+  expires "use-it-or-lose-it" days. The anniversary bonus is the only accrual event modelled today;
+  the fiscal-year rule only *blocks* a crossing request, it does not roll the balance over.
+- **Holiday & working-day calendars per location.** `countBusinessDays` counts Mon–Fri only and
+  ignores national/regional holidays — a real gap for a per-location system. Business days should
+  be derived from the HCM/calendar source of truth, not from weekdays.
+
+### Tier 2 — workflow & identity
+
+- **Authentication, authorization and RBAC.** Identity is a persona dropdown; `/approvals` is open
+  to anyone and shows every pending request globally. A real system authenticates the user, derives
+  the manager↔reports graph, guards the manager route, and scopes the queue to direct reports.
+- **Richer approval workflow.** One approver, no justification field, no edit. Production needs a
+  decision reason/comment, multi-level chains, delegation when an approver is away, edit of a
+  pending request (vs. cancel-and-refile), and cancellation of an already-approved absence that
+  returns the days.
+
+### Tier 3 — platform & polish
+
+- **Durable persistence.** The mock HCM is in-memory and resets on reload — correct for this
+  harness, but the largest step toward a real backend.
+- **Notifications** (manager alerted on a new pending; employee on a decision), a **team calendar**
+  beyond the current overlap warning, an **audit trail** of state transitions, **pagination** for
+  large request histories, and **i18n / timezone / locale** for a genuinely per-location product.
+
+These are tracked here rather than half-built: each one is small in isolation but would dilute the
+clarity of the reconciliation story the brief actually asks us to prove.
