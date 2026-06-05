@@ -18,6 +18,8 @@ export function MockProvider({ children }: { children: React.ReactNode }) {
       globalWithHcm.hcm = {
         bonus: (employeeId = 'e1', locationId = 'us', amount = 5) =>
           hcm.hcmStore.applyAnniversaryBonus({ employeeId, locationId }, amount),
+        birthday: (monthDay = new Date().toISOString().slice(5, 10), amount = 1) =>
+          hcm.hcmStore.applyBirthdayBonuses(monthDay, amount),
         failNext: (behavior: WriteBehavior, employeeId = 'e1', locationId = 'us') =>
           hcm.hcmStore.setNextWriteBehavior({ employeeId, locationId }, behavior),
         reset: () => hcm.resetHcmStore(),

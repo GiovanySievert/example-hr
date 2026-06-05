@@ -149,6 +149,8 @@ With the dev server running, the mock HCM is controllable from the browser conso
 ```js
 hcm.bonus(); // anniversary bonus on e1/us (+5); reconcile shows "Refreshed"
 hcm.bonus('e1', 'de', 3); // bonus on a specific cell/amount
+hcm.birthday(); // birthday bonus (+1) for whoever's birthday is today, across all their cells
+hcm.birthday('06-05', 2); // birthday bonus for a specific MM-DD and amount (e2 was born 06-05)
 hcm.failNext('insufficient-balance'); // next file request on e1/us is rejected
 hcm.failNext('conflict'); // next write conflicts (version moved)
 hcm.failNext('silent-wrong'); // next write returns 200 but a wrong balance
@@ -156,11 +158,13 @@ hcm.failNext('silent-wrong-pending-mismatch'); // 200 with incoherent available/
 hcm.reset(); // reset the mock to its default seed
 ```
 
-To see the **anniversary bonus mid-session**: open `/time-off`, run `hcm.bonus()`, and within a
-few seconds the US balance updates and the card shows a **Refreshed** badge. To see **honest
-recovery**: run `hcm.failNext('silent-wrong')`, then file a request — the optimistic change is
-reconciled to the authoritative HCM value, a **Reverted** row appears in the request list, and a
-toast explains why.
+To see a **balance refresh mid-session**: open `/time-off`, run `hcm.bonus()` (work anniversary)
+or `hcm.birthday('06-05')` (employee e2's birthday), and within a few seconds the affected balances
+update and the card shows a **Refreshed** badge. The reconcile is driven by the HCM bumping a cell's
+version; the birthday trigger is keyed off each employee's `birthday` (`MM-DD`) in the seed and only
+credits the employees whose birthday matches. To see **honest recovery**: run
+`hcm.failNext('silent-wrong')`, then file a request — the optimistic change is reconciled to the
+authoritative HCM value, a **Reverted** row appears in the request list, and a toast explains why.
 
 Employee requests are filed with `startDate` and `endDate`; the UI derives the submitted day count
 from weekdays in that range. The mock does not model country-specific holidays or location

@@ -244,6 +244,35 @@ describe('anniversary bonus trigger', () => {
   });
 });
 
+describe('birthday bonus trigger', () => {
+  it('credits every cell of the employee whose birthday matches, and no one else', async () => {
+    const e2UsBefore = (await (await getBalance('e2', 'us')).json()) as Balance;
+    const e2DeBefore = (await (await getBalance('e2', 'de')).json()) as Balance;
+    const e1Before = (await (await getBalance('e1', 'us')).json()) as Balance;
+
+    const credited = hcmStore.applyBirthdayBonuses('06-05', 1);
+
+    expect(credited.map((balance) => `${balance.employeeId}:${balance.locationId}`).sort()).toEqual([
+      'e2:de',
+      'e2:us',
+    ]);
+
+    const e2UsAfter = (await (await getBalance('e2', 'us')).json()) as Balance;
+    const e2DeAfter = (await (await getBalance('e2', 'de')).json()) as Balance;
+    const e1After = (await (await getBalance('e1', 'us')).json()) as Balance;
+
+    expect(e2UsAfter.available).toBe(e2UsBefore.available + 1);
+    expect(e2UsAfter.version).toBe(e2UsBefore.version + 1);
+    expect(e2DeAfter.available).toBe(e2DeBefore.available + 1);
+    expect(e1After.available).toBe(e1Before.available);
+    expect(e1After.version).toBe(e1Before.version);
+  });
+
+  it('credits nobody when no birthday matches', () => {
+    expect(hcmStore.applyBirthdayBonuses('01-01', 1)).toEqual([]);
+  });
+});
+
 describe('variable latency', () => {
   it('resolves the read even with latency enabled', async () => {
     setLatencyEnabled(true);

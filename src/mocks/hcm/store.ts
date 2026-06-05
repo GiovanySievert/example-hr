@@ -5,9 +5,15 @@ import { TimeOffRequestStatus } from '@/features/time-off/api/enums';
 
 import { DecisionResultKind, WriteBehavior, WriteResultKind } from './enums';
 
+export type Employee = {
+  id: string;
+  birthday: string;
+};
+
 type Seed = {
   balances: Balance[];
   requests: TimeOffRequest[];
+  employees?: Employee[];
   nextWriteBehavior?: Record<string, WriteBehavior>;
 };
 
@@ -100,12 +106,18 @@ export function defaultSeed(): Seed {
       pendingRequest('r4', 'e3', 'us', 4),
       pendingRequest('r5', 'e3', 'br', 3),
     ],
+    employees: [
+      { id: 'e1', birthday: '11-20' },
+      { id: 'e2', birthday: '06-05' },
+      { id: 'e3', birthday: '03-08' },
+    ],
   };
 }
 
 export class HcmStore {
   private balances = new Map<string, Balance>();
   private requests = new Map<string, TimeOffRequest>();
+  private employees = new Map<string, Employee>();
   private nextWriteBehavior = new Map<string, WriteBehavior>();
   private clock = 0;
 
@@ -116,6 +128,9 @@ export class HcmStore {
   load(seed: Seed): void {
     this.balances = new Map(seed.balances.map((b) => [cellKey(b), { ...b }]));
     this.requests = new Map(seed.requests.map((r) => [r.id, { ...r }]));
+    this.employees = new Map(
+      (seed.employees ?? []).map((employee) => [employee.id, { ...employee }]),
+    );
     this.nextWriteBehavior = new Map(Object.entries(seed.nextWriteBehavior ?? {}));
     this.clock = 0;
   }
@@ -289,8 +304,7 @@ export class HcmStore {
     };
   }
 
-  applyAnniversaryBonus(cell: BalanceCell, amount = 5): Balance | undefined {
-    const key = cellKey(cell);
+  private creditCell(key: string, amount: number): Balance | undefined {
     const current = this.balances.get(key);
     if (!current) return undefined;
     const updated: Balance = {
@@ -301,6 +315,27 @@ export class HcmStore {
     };
     this.balances.set(key, updated);
     return { ...updated };
+  }
+
+  applyAnniversaryBonus(cell: BalanceCell, amount = 5): Balance | undefined {
+    const credited = this.creditCell(cellKey(cell), amount);
+    return credited ? { ...credited } : undefined;
+  }
+
+  applyBirthdayBonuses(monthDay: string, amount = 1): Balance[] {
+    const birthdayEmployees = new Set(
+      [...this.employees.values()]
+        .filter((employee) => employee.birthday === monthDay)
+        .map((employee) => employee.id),
+    );
+
+    const credited: Balance[] = [];
+    for (const [key, current] of this.balances) {
+      if (!birthdayEmployees.has(current.employeeId)) continue;
+      const updated = this.creditCell(key, amount);
+      if (updated) credited.push({ ...updated });
+    }
+    return credited;
   }
 }
 
