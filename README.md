@@ -35,6 +35,36 @@ npm run dev          # http://localhost:3000
 | `npm run test:run`        | Single-run Vitest (unit + stories in browser mode)  |
 | `npm run test:unit`       | Unit tests only (jsdom)                             |
 | `npm run test:coverage`   | Unit tests with v8 coverage (data layer + mock HCM) |
+| `npm run chromatic`       | Publish Storybook to Chromatic (needs a token)      |
+
+## Continuous integration
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push and pull request:
+
+- **`verify`** — `npm ci`, then `lint`, `build`, `test:run` (unit + Storybook interaction tests in
+  a headless Chromium) and `build-storybook`. This is the guardrail that keeps future contributors
+  from silently breaking a state: a broken reconcile, rollback or approval path fails the build.
+- **`chromatic`** — publishes the static Storybook to [Chromatic](https://www.chromatic.com/) for a
+  live, deployed URL and visual regression baselines. It reads `secrets.CHROMATIC_PROJECT_TOKEN`;
+  add that secret under the repository's **Settings ▸ Secrets and variables ▸ Actions** to enable
+  it. Locally: `CHROMATIC_PROJECT_TOKEN=… npm run chromatic`.
+
+## Test strategy & coverage
+
+Four layers guard distinct regressions (the reasoning is in [`docs/TRD.md`](docs/TRD.md) §6):
+
+| Layer | What it protects | Where |
+| ----- | ---------------- | ----- |
+| Mock HCM integration tests | The HCM contract and every branch — success, version conflict, insufficient balance, silent-wrong, latency, anniversary bonus | `src/mocks/hcm/handlers.test.ts` |
+| Hook tests | The data layer's reconciliation logic — optimistic apply, rollback, silent-wrong detection, version validation, reconcile in-flight guard | `src/features/time-off/hooks/*.test.tsx` |
+| Storybook stories | Every visual state in isolation (loading, empty, stale, optimistic-pending, optimistic-rolled-back, HCM-rejected, HCM-silently-wrong, balance-refreshed-mid-session) | `src/features/time-off/components/*.stories.tsx` |
+| Storybook interaction tests | User-visible flows end-to-end through MSW (`play()` functions, run in browser mode by the `storybook` Vitest project) | same `*.stories.tsx`, run via `npm run test:run` |
+
+`npm run test:coverage` reports v8 coverage for the **data layer and mock HCM**
+(`src/features/time-off/{api,hooks,state}` and `src/mocks/hcm`) — the logic-heavy code where a
+silent break is most dangerous. Components are exercised by the Storybook interaction tests rather
+than by line coverage, because their correctness is about rendered states and user flows, not
+branch counts.
 
 ## Structure
 
