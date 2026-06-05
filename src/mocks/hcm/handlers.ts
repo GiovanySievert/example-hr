@@ -87,6 +87,18 @@ export const hcmHandlers = [
           message: 'not enough available balance',
           current: result.current,
         });
+      case WriteResultKind.OverlappingRequest:
+        return hcmError(409, {
+          code: HcmErrorCode.OverlappingRequest,
+          message: 'request overlaps an existing time-off request',
+          current: result.current,
+        });
+      case WriteResultKind.PolicyViolation:
+        return hcmError(422, {
+          code: HcmErrorCode.PolicyViolation,
+          message: result.message,
+          current: result.current,
+        });
       case WriteResultKind.NotFound:
         return hcmError(404, {
           code: HcmErrorCode.NotFound,

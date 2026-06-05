@@ -1,10 +1,11 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSetAtom } from 'jotai';
 
 import { useToast } from '@/shared/components/toast';
 
+import { formatDayCount } from '../api/date-range';
 import { fetchBalance, fileTimeOff, HcmRequestError } from '../api/hcm-client';
 import { TimeOffRequestStatus } from '../api/enums';
 import { timeOffKeys } from '../api/query-keys';
@@ -25,6 +26,23 @@ type FileTimeOffVariables = BalanceCell & {
 type MutationContext = {
   previous?: Balance;
 };
+
+function isSameCell(balance: Balance, cell: BalanceCell) {
+  return balance.employeeId === cell.employeeId && balance.locationId === cell.locationId;
+}
+
+function readCachedBalance(queryClient: QueryClient, cell: BalanceCell) {
+  const perCell = queryClient.getQueryData<Balance>(timeOffKeys.balance(cell));
+  if (perCell) return perCell;
+  return queryClient.getQueryData<Balance[]>(timeOffKeys.balances())?.find((balance) =>
+    isSameCell(balance, cell),
+  );
+}
+
+function writeBalanceToCorpus(balances: Balance[] | undefined, authoritative: Balance) {
+  if (!balances) return balances;
+  return balances.map((balance) => (isSameCell(balance, authoritative) ? authoritative : balance));
+}
 
 function applyOptimisticDelta(balance: Balance, days: number): Balance {
   return {
@@ -76,8 +94,8 @@ export function useFileTimeOff() {
   return useMutation<Balance, Error, FileTimeOffVariables, MutationContext>({
     mutationFn: async ({ employeeId, locationId, startDate, endDate, days }) => {
       const cell: BalanceCell = { employeeId, locationId };
-      const current = queryClient.getQueryData<Balance>(timeOffKeys.balance(cell));
-      const expectedVersion = current?.version ?? 0;
+      const current = readCachedBalance(queryClient, cell) ?? (await fetchBalance(cell));
+      const expectedVersion = current.version;
       return fileTimeOff({ employeeId, locationId, startDate, endDate, days, expectedVersion });
     },
 
@@ -85,10 +103,15 @@ export function useFileTimeOff() {
       const cell: BalanceCell = { employeeId, locationId };
       const key = timeOffKeys.balance(cell);
       await queryClient.cancelQueries({ queryKey: key });
+      await queryClient.cancelQueries({ queryKey: timeOffKeys.balances() });
 
-      const previous = queryClient.getQueryData<Balance>(key);
+      const previous = readCachedBalance(queryClient, cell);
       if (previous) {
-        queryClient.setQueryData<Balance>(key, applyOptimisticDelta(previous, days));
+        const optimistic = applyOptimisticDelta(previous, days);
+        queryClient.setQueryData<Balance>(key, optimistic);
+        queryClient.setQueryData<Balance[]>(timeOffKeys.balances(), (balances) =>
+          writeBalanceToCorpus(balances, optimistic),
+        );
       }
       markInFlight(cell);
       return { previous };
@@ -100,10 +123,16 @@ export function useFileTimeOff() {
       const key = timeOffKeys.balance(cell);
       if (context?.previous) {
         queryClient.setQueryData<Balance>(key, context.previous);
+        queryClient.setQueryData<Balance[]>(timeOffKeys.balances(), (balances) =>
+          writeBalanceToCorpus(balances, context.previous as Balance),
+        );
       }
 
       if (error instanceof HcmRequestError && error.body.current) {
         queryClient.setQueryData<Balance>(key, error.body.current);
+        queryClient.setQueryData<Balance[]>(timeOffKeys.balances(), (balances) =>
+          writeBalanceToCorpus(balances, error.body.current as Balance),
+        );
       }
 
       const description =
@@ -128,6 +157,9 @@ export function useFileTimeOff() {
       const before = context?.previous;
       if (before && isSilentlyWrong(before, authoritative, days)) {
         queryClient.setQueryData<Balance>(key, authoritative);
+        queryClient.setQueryData<Balance[]>(timeOffKeys.balances(), (balances) =>
+          writeBalanceToCorpus(balances, authoritative),
+        );
         addRolledBackRequest(makeRolledBackRequest(variables));
         toast({
           variant: 'error',
@@ -139,13 +171,16 @@ export function useFileTimeOff() {
       }
 
       queryClient.setQueryData<Balance>(key, authoritative);
+      queryClient.setQueryData<Balance[]>(timeOffKeys.balances(), (balances) =>
+        writeBalanceToCorpus(balances, authoritative),
+      );
       await queryClient.invalidateQueries({
         queryKey: timeOffKeys.requests(),
       });
       toast({
         variant: 'success',
         title: 'Request filed',
-        description: `${days} day(s) submitted for approval.`,
+        description: `${formatDayCount(days)} submitted for approval.`,
       });
     },
 

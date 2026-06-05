@@ -12,8 +12,8 @@ import { usePendingRequests } from './use-pending-requests';
 import { createWrapper } from './test-utils';
 
 const CELL = { employeeId: 'e1', locationId: 'us' };
-const ONE_DAY = { ...CELL, startDate: '2026-06-08', endDate: '2026-06-08', days: 1 };
-const THREE_DAYS = { ...CELL, startDate: '2026-06-08', endDate: '2026-06-10', days: 3 };
+const ONE_DAY = { ...CELL, startDate: '2026-06-12', endDate: '2026-06-12', days: 1 };
+const THREE_DAYS = { ...CELL, startDate: '2026-06-12', endDate: '2026-06-16', days: 3 };
 
 beforeEach(() => {
   resetHcmStore();
@@ -40,6 +40,32 @@ describe('useFileTimeOff', () => {
     const cached = queryClient.getQueryData<Balance>(timeOffKeys.balance(CELL));
     expect(cached?.available).toBe(9);
     expect(cached?.pending).toBe(5);
+    expect(cached?.version).toBe(2);
+  });
+
+  it('uses the hydrated balance corpus when the per-cell cache is not loaded yet', async () => {
+    const { Wrapper, queryClient } = createWrapper();
+    queryClient.setQueryData(timeOffKeys.balances(), hcmStore.getBalances());
+
+    const { result } = renderHook(() => useFileTimeOff(), { wrapper: Wrapper });
+
+    result.current.mutate({
+      ...CELL,
+      startDate: '2026-06-12',
+      endDate: '2026-06-25',
+      days: 10,
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const cached = queryClient
+      .getQueryData<Balance[]>(timeOffKeys.balances())
+      ?.find(
+        (balance) =>
+          balance.employeeId === CELL.employeeId && balance.locationId === CELL.locationId,
+      );
+    expect(cached?.available).toBe(2);
+    expect(cached?.pending).toBe(12);
     expect(cached?.version).toBe(2);
   });
 

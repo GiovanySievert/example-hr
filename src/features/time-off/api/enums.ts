@@ -8,6 +8,8 @@ export enum TimeOffRequestStatus {
 export enum HcmErrorCode {
   Conflict = 'conflict',
   InsufficientBalance = 'insufficient-balance',
+  OverlappingRequest = 'overlapping-request',
+  PolicyViolation = 'policy-violation',
   NotFound = 'not-found',
   InvalidRequest = 'invalid-request',
 }

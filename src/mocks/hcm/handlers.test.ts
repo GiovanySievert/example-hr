@@ -31,8 +31,8 @@ async function fileRequest(body: {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
-      startDate: '2026-06-08',
-      endDate: '2026-06-10',
+      startDate: '2026-06-12',
+      endDate: '2026-06-16',
       ...body,
     }),
   });
@@ -108,6 +108,30 @@ describe('POST /api/hcm/balance (write)', () => {
     const res = await fileRequest({ ...CELL, days: 999, expectedVersion: 1 });
     expect(res.status).toBe(422);
     expect(((await res.json()) as HcmError).code).toBe(HcmErrorCode.InsufficientBalance);
+  });
+
+  it('overlap: rejects an active request in the same employee date range', async () => {
+    const res = await fileRequest({
+      ...CELL,
+      startDate: '2026-06-08',
+      endDate: '2026-06-09',
+      days: 2,
+      expectedVersion: 1,
+    });
+    expect(res.status).toBe(409);
+    expect(((await res.json()) as HcmError).code).toBe(HcmErrorCode.OverlappingRequest);
+  });
+
+  it('policy-violation: rejects requests longer than ten business days', async () => {
+    const res = await fileRequest({
+      ...CELL,
+      startDate: '2026-06-12',
+      endDate: '2026-06-27',
+      days: 11,
+      expectedVersion: 1,
+    });
+    expect(res.status).toBe(422);
+    expect(((await res.json()) as HcmError).code).toBe(HcmErrorCode.PolicyViolation);
   });
 
   it('invalid-request: non-positive days', async () => {

@@ -4,12 +4,16 @@ import { useState } from 'react';
 
 import { Button, Input, Select, Typography } from '@/shared/components';
 
-import { countBusinessDays } from '../api/date-range';
+import { countBusinessDays, dateRangesOverlap, formatDayCount } from '../api/date-range';
+import { TimeOffRequestStatus } from '../api/enums';
+import { MAX_REQUEST_DATE, MAX_REQUEST_DATE_LABEL, validateTimeOffPolicy } from '../api/request-policy';
+import type { TimeOffRequest } from '../api/types';
 
-export type LocationOption = { id: string; label: string };
+export type LocationOption = { id: string; label: string; available?: number };
 
 type TimeOffRequestFormProps = {
   locations: LocationOption[];
+  existingRequests?: Array<TimeOffRequest & { reverted?: boolean }>;
   maxDays?: number;
   submitting?: boolean;
   onSubmit: (values: {
@@ -30,26 +34,42 @@ function FormError({ message }: { message: string }) {
 
 export function TimeOffRequestForm({
   locations,
+  existingRequests = [],
   maxDays,
   submitting = false,
   onSubmit,
 }: TimeOffRequestFormProps) {
   const [locationId, setLocationId] = useState(locations[0]?.id ?? '');
-  const [startDate, setStartDate] = useState('2026-06-08');
-  const [endDate, setEndDate] = useState('2026-06-09');
+  const [startDate, setStartDate] = useState('2026-06-12');
+  const [endDate, setEndDate] = useState('2026-06-15');
   const [error, setError] = useState<string | null>(null);
 
-  const requestedDays = countBusinessDays(startDate, endDate);
+  const outsideSupportedRange = startDate > MAX_REQUEST_DATE || endDate > MAX_REQUEST_DATE;
+  const requestedDays = outsideSupportedRange ? 0 : countBusinessDays(startDate, endDate);
+  const selectedLocationMaxDays =
+    locations.find((location) => location.id === locationId)?.available ?? maxDays;
+  const overlappingRequest = existingRequests.find(
+    (request) =>
+      !request.reverted &&
+      (request.status === TimeOffRequestStatus.Pending ||
+        request.status === TimeOffRequestStatus.Approved) &&
+      dateRangesOverlap(startDate, endDate, request.startDate, request.endDate),
+  );
 
   function validate(parsedDays: number): string | null {
     if (!locationId) return 'Select a location.';
     if (!startDate || !endDate) return 'Select a start and end date.';
     if (startDate > endDate) return 'End date must be on or after start date.';
+    const policyViolation = validateTimeOffPolicy({ startDate, endDate, days: parsedDays });
+    if (policyViolation) return policyViolation.message;
+    if (overlappingRequest) {
+      return 'This date range overlaps an existing time-off request.';
+    }
     if (!Number.isInteger(parsedDays) || parsedDays <= 0) {
       return 'Select at least one weekday.';
     }
-    if (maxDays !== undefined && parsedDays > maxDays) {
-      return `You only have ${maxDays} day(s) available.`;
+    if (selectedLocationMaxDays !== undefined && parsedDays > selectedLocationMaxDays) {
+      return `You only have ${formatDayCount(selectedLocationMaxDays)} available.`;
     }
     return null;
   }
@@ -67,9 +87,12 @@ export function TimeOffRequestForm({
   }
 
   const submitLabel = submitting ? 'Submitting…' : 'Request time off';
+  const requestSummary = outsideSupportedRange
+    ? `Dates can be requested through ${MAX_REQUEST_DATE_LABEL}.`
+    : `${formatDayCount(requestedDays, 'business day')} will be submitted for approval.`;
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-4">
+    <form noValidate onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-4">
       <div className="flex flex-col gap-1">
         <label htmlFor="location" className="text-sm font-medium text-foreground">
           Location
@@ -77,6 +100,7 @@ export function TimeOffRequestForm({
         <Select
           id="location"
           value={locationId}
+          disabled={submitting}
           onChange={(event) => setLocationId(event.target.value)}
           options={locations.map((location) => ({ value: location.id, label: location.label }))}
         />
@@ -89,6 +113,9 @@ export function TimeOffRequestForm({
         <Input
           id="start-date"
           type="date"
+          className="time-off-date-input"
+          max={MAX_REQUEST_DATE}
+          disabled={submitting}
           value={startDate}
           onChange={(event) => setStartDate(event.target.value)}
         />
@@ -101,14 +128,15 @@ export function TimeOffRequestForm({
         <Input
           id="end-date"
           type="date"
+          className="time-off-date-input"
+          max={MAX_REQUEST_DATE}
+          disabled={submitting}
           value={endDate}
           onChange={(event) => setEndDate(event.target.value)}
         />
       </div>
 
-      <Typography variant="muted">
-        {requestedDays} business day(s) will be submitted for approval.
-      </Typography>
+      <Typography variant="muted">{requestSummary}</Typography>
 
       {error ? <FormError message={error} /> : null}
 

@@ -1,4 +1,6 @@
 import type { Balance, BalanceCell, TimeOffRequest } from '@/features/time-off/api/types';
+import { dateRangesOverlap } from '@/features/time-off/api/date-range';
+import { validateTimeOffPolicy } from '@/features/time-off/api/request-policy';
 import { TimeOffRequestStatus } from '@/features/time-off/api/enums';
 
 import { DecisionResultKind, WriteBehavior, WriteResultKind } from './enums';
@@ -14,6 +16,8 @@ export type FileRequestResult =
   | { kind: WriteResultKind.SilentWrong; balance: Balance }
   | { kind: WriteResultKind.Conflict; current: Balance }
   | { kind: WriteResultKind.InsufficientBalance; current: Balance }
+  | { kind: WriteResultKind.OverlappingRequest; current: Balance }
+  | { kind: WriteResultKind.PolicyViolation; current: Balance; message: string }
   | { kind: WriteResultKind.NotFound }
   | { kind: WriteResultKind.InvalidRequest };
 
@@ -70,6 +74,13 @@ function pendingRequest(
     createdAt: FIXED_NOW,
     updatedAt: FIXED_NOW,
   };
+}
+
+function isActiveRequest(request: TimeOffRequest) {
+  return (
+    request.status === TimeOffRequestStatus.Pending ||
+    request.status === TimeOffRequestStatus.Approved
+  );
 }
 
 export function defaultSeed(): Seed {
@@ -158,8 +169,31 @@ export class HcmStore {
       return { kind: WriteResultKind.Conflict, current: { ...cell } };
     }
 
+    const overlappingRequest = [...this.requests.values()].find(
+      (request) =>
+        request.employeeId === args.employeeId &&
+        isActiveRequest(request) &&
+        dateRangesOverlap(args.startDate, args.endDate, request.startDate, request.endDate),
+    );
+    if (overlappingRequest) {
+      return { kind: WriteResultKind.OverlappingRequest, current: { ...cell } };
+    }
+
     if (injected === WriteBehavior.InsufficientBalance || args.days > cell.available) {
       return { kind: WriteResultKind.InsufficientBalance, current: { ...cell } };
+    }
+
+    const policyViolation = validateTimeOffPolicy({
+      startDate: args.startDate,
+      endDate: args.endDate,
+      days: args.days,
+    });
+    if (policyViolation) {
+      return {
+        kind: WriteResultKind.PolicyViolation,
+        current: { ...cell },
+        message: policyViolation.message,
+      };
     }
 
     if (injected === WriteBehavior.SilentWrong) {

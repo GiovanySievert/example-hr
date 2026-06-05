@@ -6,6 +6,8 @@ import { RequestStatusList } from './request-status-list';
 const base = {
   employeeId: 'e1',
   locationId: 'us',
+  startDate: '2026-06-08',
+  endDate: '2026-06-09',
   createdAt: '2026-06-03T00:00:00.000Z',
   updatedAt: '2026-06-03T00:00:00.000Z',
 };
@@ -26,6 +28,14 @@ export const Empty: Story = {
   args: { requests: [] },
 };
 
+export const Loading: Story = {
+  args: { requests: [], loading: true },
+};
+
+export const Error: Story = {
+  args: { requests: [], error: true },
+};
+
 export const Mixed: Story = {
   args: {
     requests: [
@@ -34,6 +44,13 @@ export const Mixed: Story = {
       { ...base, id: 'r3', days: 3, status: TimeOffRequestStatus.Denied, locationId: 'de' },
       { ...base, id: 'r4', days: 1, status: TimeOffRequestStatus.Cancelled, locationId: 'de' },
     ],
+  },
+};
+
+export const Syncing: Story = {
+  args: {
+    ...Mixed.args,
+    refreshing: true,
   },
 };
 

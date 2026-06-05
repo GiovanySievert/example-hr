@@ -57,6 +57,7 @@ export function EmployeeTimeOff({ employeeId, reconcileIntervalMs }: EmployeeTim
       cells.map((cell) => ({
         id: cell.locationId,
         label: LOCATION_LABELS[cell.locationId] ?? cell.locationId.toUpperCase(),
+        available: cell.available,
       })),
     [cells],
   );
@@ -103,9 +104,10 @@ export function EmployeeTimeOff({ employeeId, reconcileIntervalMs }: EmployeeTim
         ))}
       </section>
 
-      <section className="flex flex-wrap items-start gap-8">
+      <section className="flex flex-wrap items-start gap-4">
         <TimeOffRequestForm
           locations={locations}
+          existingRequests={requests}
           submitting={fileTimeOff.isPending}
           onSubmit={({ locationId, startDate, endDate, days }) =>
             fileTimeOff.mutate({ employeeId, locationId, startDate, endDate, days })
@@ -114,7 +116,11 @@ export function EmployeeTimeOff({ employeeId, reconcileIntervalMs }: EmployeeTim
         <RequestStatusList
           requests={requests}
           locationLabels={LOCATION_LABELS}
+          loading={requestsQuery.isLoading}
+          error={requestsQuery.isError}
+          refreshing={(requestsQuery.isFetching && !requestsQuery.isLoading) || cancelRequest.isPending}
           cancellingRequestId={cancelRequest.isPending ? cancelRequest.variables?.id : undefined}
+          onRetry={() => void requestsQuery.refetch()}
           onCancelRequest={(request) => cancelRequest.mutate(request)}
         />
       </section>
