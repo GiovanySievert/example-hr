@@ -56,12 +56,12 @@ See [`.env.example`](.env.example) for the optional overrides (e.g. disabling th
 
 Four layers guard distinct regressions (the reasoning is in [`docs/TRD.md`](docs/TRD.md) §6):
 
-| Layer | What it protects | Where |
-| ----- | ---------------- | ----- |
-| Mock HCM integration tests | The HCM contract and every branch — success, version conflict, insufficient balance, silent-wrong, latency, anniversary bonus | `src/mocks/hcm/handlers.test.ts` |
-| Hook tests | The data layer's reconciliation logic — optimistic apply, rollback, silent-wrong detection, version validation, reconcile in-flight guard | `src/features/time-off/hooks/*.test.tsx` |
-| Storybook stories | Every visual state in isolation (loading, empty, stale, optimistic-pending, optimistic-rolled-back, HCM-rejected, HCM-silently-wrong, balance-refreshed-mid-session) | `src/features/time-off/components/*.stories.tsx` |
-| Storybook interaction tests | User-visible flows end-to-end through MSW (`play()` functions, run in browser mode by the `storybook` Vitest project) | same `*.stories.tsx`, run via `npm run test:run` |
+| Layer                       | What it protects                                                                                                                                                     | Where                                            |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Mock HCM integration tests  | The HCM contract and every branch — success, version conflict, insufficient balance, silent-wrong, latency, anniversary bonus                                        | `src/mocks/hcm/handlers.test.ts`                 |
+| Hook tests                  | The data layer's reconciliation logic — optimistic apply, rollback, silent-wrong detection, version validation, reconcile in-flight guard                            | `src/features/time-off/hooks/*.test.tsx`         |
+| Storybook stories           | Every visual state in isolation (loading, empty, stale, optimistic-pending, optimistic-rolled-back, HCM-rejected, HCM-silently-wrong, balance-refreshed-mid-session) | `src/features/time-off/components/*.stories.tsx` |
+| Storybook interaction tests | User-visible flows end-to-end through MSW (`play()` functions, run in browser mode by the `storybook` Vitest project)                                                | same `*.stories.tsx`, run via `npm run test:run` |
 
 `npm run test:coverage` reports v8 coverage for the **data layer and mock HCM**
 (`src/features/time-off/{api,hooks,state}` and `src/mocks/hcm`) — the logic-heavy code where a

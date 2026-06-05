@@ -113,7 +113,9 @@ export function EmployeeTimeOff({ employeeId, reconcileIntervalMs }: EmployeeTim
           locationLabels={LOCATION_LABELS}
           loading={requestsQuery.isLoading}
           error={requestsQuery.isError}
-          refreshing={(requestsQuery.isFetching && !requestsQuery.isLoading) || cancelRequest.isPending}
+          refreshing={
+            (requestsQuery.isFetching && !requestsQuery.isLoading) || cancelRequest.isPending
+          }
           cancellingRequestId={cancelRequest.isPending ? cancelRequest.variables?.id : undefined}
           onRetry={() => void requestsQuery.refetch()}
           onCancelRequest={(request) => cancelRequest.mutate(request)}

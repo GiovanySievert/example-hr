@@ -252,10 +252,9 @@ describe('birthday bonus trigger', () => {
 
     const credited = hcmStore.applyBirthdayBonuses('06-05', 1);
 
-    expect(credited.map((balance) => `${balance.employeeId}:${balance.locationId}`).sort()).toEqual([
-      'e2:de',
-      'e2:us',
-    ]);
+    expect(credited.map((balance) => `${balance.employeeId}:${balance.locationId}`).sort()).toEqual(
+      ['e2:de', 'e2:us'],
+    );
 
     const e2UsAfter = (await (await getBalance('e2', 'us')).json()) as Balance;
     const e2DeAfter = (await (await getBalance('e2', 'de')).json()) as Balance;

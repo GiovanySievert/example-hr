@@ -31,11 +31,7 @@ describe('date-range', () => {
   });
 
   it('detects overlapping date ranges inclusively', () => {
-    expect(dateRangesOverlap('2026-06-08', '2026-06-11', '2026-06-11', '2026-06-12')).toBe(
-      true,
-    );
-    expect(dateRangesOverlap('2026-06-08', '2026-06-11', '2026-06-12', '2026-06-15')).toBe(
-      false,
-    );
+    expect(dateRangesOverlap('2026-06-08', '2026-06-11', '2026-06-11', '2026-06-12')).toBe(true);
+    expect(dateRangesOverlap('2026-06-08', '2026-06-11', '2026-06-12', '2026-06-15')).toBe(false);
   });
 });

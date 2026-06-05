@@ -49,21 +49,21 @@ describe('validateTimeOffRequest', () => {
   });
 
   it('rejects an end date before the start date', () => {
-    expect(validateTimeOffRequest({ ...VALID, startDate: '2026-06-18', endDate: '2026-06-15' })).toBe(
-      'End date must be on or after start date.',
-    );
+    expect(
+      validateTimeOffRequest({ ...VALID, startDate: '2026-06-18', endDate: '2026-06-15' }),
+    ).toBe('End date must be on or after start date.');
   });
 
   it('surfaces a policy violation message', () => {
-    expect(validateTimeOffRequest({ ...VALID, startDate: '2026-06-06', endDate: '2026-06-06' })).toBe(
-      'Requests must start at least 3 days from today.',
-    );
+    expect(
+      validateTimeOffRequest({ ...VALID, startDate: '2026-06-06', endDate: '2026-06-06' }),
+    ).toBe('Requests must start at least 3 days from today.');
   });
 
   it('blocks a range that overlaps an active request', () => {
-    expect(
-      validateTimeOffRequest({ ...VALID, existingRequests: [existing({ id: 'r1' })] }),
-    ).toBe('This date range overlaps an existing time-off request.');
+    expect(validateTimeOffRequest({ ...VALID, existingRequests: [existing({ id: 'r1' })] })).toBe(
+      'This date range overlaps an existing time-off request.',
+    );
   });
 
   it('ignores reverted and inactive requests when checking overlap', () => {

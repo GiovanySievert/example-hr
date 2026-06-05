@@ -24,7 +24,8 @@ export function RequestStatusRow({
   cancelling = false,
   onCancel,
 }: RequestStatusRowProps) {
-  const canCancel = onCancel && !request.reverted && request.status === TimeOffRequestStatus.Pending;
+  const canCancel =
+    onCancel && !request.reverted && request.status === TimeOffRequestStatus.Pending;
   const dateRange = formatDateRange(request.startDate, request.endDate);
   const requestLabel = `${dateRange ? `${dateRange} · ` : ''}${formatDayCount(request.days)} · ${locationLabel}`;
 

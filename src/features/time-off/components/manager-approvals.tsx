@@ -19,7 +19,9 @@ export function ManagerApprovals() {
   }
 
   const requests = requestsQuery.data ?? [];
-  const pendingRequests = requests.filter((request) => request.status === TimeOffRequestStatus.Pending);
+  const pendingRequests = requests.filter(
+    (request) => request.status === TimeOffRequestStatus.Pending,
+  );
 
   return (
     <PendingApprovalList
