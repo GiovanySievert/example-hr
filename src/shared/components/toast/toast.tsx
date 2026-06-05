@@ -23,14 +23,10 @@ export function Toast({ toast, onDismiss }: ToastProps) {
       role="status"
       className={`pointer-events-auto flex w-80 items-start gap-3 overflow-hidden rounded-lg border p-4 shadow-lg ${variantClasses[toast.variant]}`}
     >
-      <span
-        className={`mt-1 h-2 w-2 shrink-0 rounded-full ${accentClasses[toast.variant]}`}
-      />
+      <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${accentClasses[toast.variant]}`} />
       <div className="flex flex-1 flex-col gap-1">
         <p className="text-sm font-medium leading-none">{toast.title}</p>
-        {toast.description ? (
-          <p className="text-sm text-muted">{toast.description}</p>
-        ) : null}
+        {toast.description ? <p className="text-sm text-muted">{toast.description}</p> : null}
       </div>
       <button
         type="button"

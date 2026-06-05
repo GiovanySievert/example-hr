@@ -1,3 +1,5 @@
 import type { RequestHandler } from 'msw';
 
-export const handlers: RequestHandler[] = [];
+import { hcmHandlers } from './hcm';
+
+export const handlers: RequestHandler[] = [...hcmHandlers];

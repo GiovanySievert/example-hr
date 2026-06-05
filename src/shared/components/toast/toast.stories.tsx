@@ -14,9 +14,7 @@ function ToastDemo() {
       </Button>
       <Button
         variant="secondary"
-        onClick={() =>
-          toast({ title: 'Success', description: 'All good!', variant: 'success' })
-        }
+        onClick={() => toast({ title: 'Success', description: 'All good!', variant: 'success' })}
       >
         Success
       </Button>

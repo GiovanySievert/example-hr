@@ -4,10 +4,10 @@ import { describe, expect, it } from 'vitest';
 import Home from './page';
 
 describe('Home', () => {
-  it('renderiza o heading inicial', () => {
+  it('renders the app title and navigation', () => {
     render(<Home />);
-    expect(
-      screen.getByRole('heading', { name: /edit the page\.tsx/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'ExampleHR' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /employee · time off/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /manager · approvals/i })).toBeInTheDocument();
   });
 });

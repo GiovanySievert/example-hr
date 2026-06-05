@@ -14,6 +14,17 @@ const dirname =
 
 export default defineConfig({
   test: {
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      include: [
+        'src/features/time-off/api/**',
+        'src/features/time-off/hooks/**',
+        'src/features/time-off/state.ts',
+        'src/mocks/hcm/**',
+      ],
+      exclude: ['**/*.test.{ts,tsx}', '**/test-utils.tsx'],
+    },
     projects: [
       {
         extends: true,
@@ -29,9 +40,7 @@ export default defineConfig({
       },
       {
         extends: true,
-        plugins: [
-          storybookTest({ configDir: path.join(dirname, '.storybook') }),
-        ],
+        plugins: [storybookTest({ configDir: path.join(dirname, '.storybook') })],
         test: {
           name: 'storybook',
           browser: {

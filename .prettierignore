@@ -1,0 +1,8 @@
+.next
+out
+build
+storybook-static
+coverage
+node_modules
+public/mockServiceWorker.js
+package-lock.json
