@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    command: npm run dev -- -H 0.0.0.0
+    ports:
+      - '3000:3000'
+    environment:
+      - NEXT_TELEMETRY_DISABLED=1
+
+  storybook:
+    build: .
+    command: npm run storybook -- --host 0.0.0.0 --no-open
+    ports:
+      - '6006:6006'

@@ -21,8 +21,20 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
-No environment variables are required — the app runs entirely against the in-memory mock HCM.
-See [`.env.example`](.env.example) for the optional overrides (e.g. disabling the MSW worker).
+Node 22 is expected (see [`.nvmrc`](.nvmrc)). No environment variables are required — the app runs
+entirely against the in-memory mock HCM. See [`.env.example`](.env.example) for the optional
+overrides (e.g. disabling the MSW worker).
+
+### With Docker (single command)
+
+A single command brings up both the app and Storybook, each against the in-memory mock HCM:
+
+```bash
+docker compose up        # app → http://localhost:3000   Storybook → http://localhost:6006
+```
+
+Both services share one image (Node 22) defined in [`Dockerfile`](Dockerfile); the wiring is in
+[`docker-compose.yml`](docker-compose.yml). Stop with `docker compose down`.
 
 ## Scripts
 
@@ -141,6 +153,12 @@ The app runs entirely against the in-memory mock HCM — no backend required. A 
 (`npm run dev`) is enough. Storybook (`npm run storybook`) renders every state in isolation,
 including the failure paths, employee persona switching, cancellation, request history, date-range
 request labels, and grouped manager approvals with interaction tests under `@storybook/addon-vitest`.
+
+> Note: opening Storybook may log a few `No existing state found for follower with id:
+'storybook/...'` warnings in the browser console. These come from Storybook 10's own
+> UniversalStore / test-widget initialisation
+> ([storybookjs/storybook#33575](https://github.com/storybookjs/storybook/issues/33575)) — they are
+> cosmetic, the stories render fine, and the interaction tests (`npm run test:run`) are unaffected.
 
 ### Driving the mock (browser console)
 
