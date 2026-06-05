@@ -50,8 +50,10 @@ then verify against the SoT, and recover _honestly_ when the SoT disagrees.
 
 ### Behaviours the mock must reproduce
 
-- **Anniversary / start-of-year bonus** that fires on a timer/trigger and changes a balance
-  **while the app is open** (the "refresh underneath you" problem).
+- **Balance bumps while the app is open** (the "refresh underneath you" problem), via two triggers:
+  a generic **work-anniversary / start-of-year bonus** on a chosen cell, and an
+  **employee-birthday bonus** keyed off each seeded employee's `birthday` (`MM-DD`) that credits
+  every cell of whoever's birthday matches. Both bump the cell `version` so reconcile surfaces them.
 - **Silent failures**: 200 OK with a wrong value.
 - **Conflict / insufficient-balance** rejections.
 - **Variable latency**.
@@ -238,24 +240,33 @@ When the corpus reconcile lands while a user action is mid-flight, who wins?
 
 ```
 (employee)/time-off                         Employee view
-  TimeOffPage
+  time-off/page.tsx
     EmployeeTimeOffShell           → active employee persona selector for mock multi-employee data
-    BalanceCard / BalanceCell      → C2/C6: per-cell authoritative balance, stale/refreshed badge
-    TimeOffRequestForm             → write path: location + date range, derives business days
-    RequestStatusList              → full history, cancel pending, rollback item, never approved→denied
+      EmployeeTimeOff              → orchestrates balances, form, history, reconcile
+        BalanceCard                → C2/C6: per-cell authoritative balance, stale/refreshed badge
+        TimeOffRequestForm         → write path: location + date range, derives business days
+        RequestStatusList          → full history, cancel pending, rollback row, never approved→denied
+          RequestStatusRow
 
 (manager)/approvals                         Manager view
-  ApprovalsPage
-    PendingRequestList             → pending requests grouped by employee
-      PendingRequestRow            → C2: balance context re-read + expected version at decision time
-        approve / deny             → blocked on obviously-stale cell (C1/C5)
+  approvals/page.tsx
+    ManagerApprovals
+      PendingApprovalList          → pending requests grouped by employee, team-overlap warnings
+        PendingApprovalCard        → C2: per-cell balance re-read + staleness tracking
+          PendingApprovalRow       → balance context + expected version at decision time
+            approve / deny         → blocked on obviously-stale or insufficient cell (C1/C5)
 
-Supporting modules:
+Supporting modules (pure logic, unit-tested in isolation):
   api/date-range                   → weekday counting and display labels
   api/request-policy               → advance notice, max duration, fiscal-year limits
-  hooks/useRequests                → complete request history
-  hooks/usePendingRequests         → manager pending queue
-  hooks/useCancelRequest           → cancel with balance-version check
+  api/request-validation           → the form's full validation chain
+  api/team-conflict                → group-by-employee + team-overlap summary
+  api/approval-decision            → insufficient-balance / approve-disabled rules
+  api/locations                    → location id → label
+  hooks/useFileTimeOff             → optimistic write + rollback + silent-wrong re-read
+  hooks/useReconcile               → version-guarded corpus reconcile with in-flight guard
+  hooks/useRequestDecision         → shared approve/deny/cancel mutation
+  hooks/balance-cache              → per-cell + corpus cache helpers
 ```
 
 Shared UI ephemeral state (set of in-flight cells, stale/refreshed banners, local rolled-back
@@ -267,7 +278,8 @@ What each layer protects, and why:
 
 - **Mock HCM integration tests (Vitest, unit project, against MSW handlers)** — protect the
   _contract and the branches_: success, conflict, insufficient-balance, silent-wrong, variable
-  latency, and bonus-applied. If these drift, every layer above is testing a fiction.
+  latency, and both bonus triggers (anniversary and birthday-by-`MM-DD`). If these drift, every
+  layer above is testing a fiction.
 - **Hook tests (`renderHook` + MSW)** — protect the _reconciliation logic_: optimistic apply,
   rollback on conflict/insufficient, silent-wrong detection on the success path, manager version
   validation, employee cancel, request refetch after filing, and reconcile that respects an
@@ -291,8 +303,8 @@ Manager view: `empty`, `pending-balance-ok`, `pending-balance-insufficient`,
 `grouped-by-employee`, `team-overlap-warning`,
 `balance-changed-between-open-and-approve` (conflict on approve), `approval-success`, `denial`.
 
-Coverage is gated on the data-layer hooks and the mock HCM branches (FASE 5); the report is
-documented in the README.
+Coverage is gated on the data-layer hooks and the mock HCM branches; the report is documented in
+the README.
 
 ## 7. Out of scope & future work
 
@@ -338,3 +350,19 @@ gaps a production version would close, ordered by how much they shape the rest o
 
 These are tracked here rather than half-built: each one is small in isolation but would dilute the
 clarity of the reconciliation story the brief actually asks us to prove.
+
+## 8. Delivery & how it runs
+
+The deliverables are wired so a reviewer can run everything locally with a single command and so
+regressions cannot land silently.
+
+- **Run it (one command).** `npm run dev` serves the app; `npm run storybook` serves Storybook —
+  both against the in-memory mock HCM, no backend. Alternatively `docker compose up` brings up the
+  app (`:3000`) and Storybook (`:6006`) together from one Node 22 image, so the environment is
+  reproducible without a local toolchain.
+- **Tests & coverage.** `npm run test:run` runs the unit project (jsdom) and the Storybook
+  interaction project (Chromium via Playwright) in one pass; `npm run test:coverage` reports v8
+  coverage for the data layer and mock HCM. The four test layers and what each protects are in §6.
+- **CI & deployed Storybook.** `.github/workflows/ci.yml` runs `lint`, `build`, `test:run` and
+  `build-storybook` on every push/PR (the regression guard), plus a Chromatic job that publishes a
+  live, deployed Storybook with visual baselines once a `CHROMATIC_PROJECT_TOKEN` is set.
