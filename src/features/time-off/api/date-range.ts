@@ -1,4 +1,4 @@
-const DATE_FORMATTER = new Intl.DateTimeFormat('en', {
+const DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
   month: 'short',
   day: 'numeric',
   timeZone: 'UTC',
@@ -38,5 +38,19 @@ export function formatDateRange(startDate?: string, endDate?: string) {
 
   const startLabel = DATE_FORMATTER.format(start);
   const endLabel = DATE_FORMATTER.format(end);
-  return startDate === endDate ? startLabel : `${startLabel}-${endLabel}`;
+  return startDate === endDate ? startLabel : `${startLabel} - ${endLabel}`;
+}
+
+export function formatDayCount(days: number, unit = 'day') {
+  return `${days} ${unit}${days === 1 ? '' : 's'}`;
+}
+
+export function dateRangesOverlap(
+  startDate: string | undefined,
+  endDate: string | undefined,
+  otherStartDate: string | undefined,
+  otherEndDate: string | undefined,
+) {
+  if (!startDate || !endDate || !otherStartDate || !otherEndDate) return false;
+  return startDate <= otherEndDate && endDate >= otherStartDate;
 }

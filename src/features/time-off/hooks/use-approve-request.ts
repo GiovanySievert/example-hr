@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useToast } from '@/shared/components/toast';
 
+import { formatDayCount } from '../api/date-range';
 import { approveRequest, fetchBalance, HcmRequestError } from '../api/hcm-client';
 import { timeOffKeys } from '../api/query-keys';
 import type { BalanceCell, TimeOffRequest } from '../api/types';
@@ -37,7 +38,7 @@ export function useApproveRequest() {
       toast({
         variant: 'success',
         title: 'Request approved',
-        description: `${updated.days} day(s) approved.`,
+        description: `${formatDayCount(updated.days)} approved.`,
       });
     },
 

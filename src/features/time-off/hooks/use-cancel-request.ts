@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useToast } from '@/shared/components/toast';
 
+import { formatDayCount } from '../api/date-range';
 import { cancelRequest, fetchBalance, HcmRequestError } from '../api/hcm-client';
 import { timeOffKeys } from '../api/query-keys';
 import type { Balance, BalanceCell, TimeOffRequest } from '../api/types';
@@ -50,7 +51,7 @@ export function useCancelRequest() {
       toast({
         variant: 'default',
         title: 'Request cancelled',
-        description: `${updated.days} day(s) returned to your balance.`,
+        description: `${formatDayCount(updated.days)} returned to your balance.`,
       });
     },
 

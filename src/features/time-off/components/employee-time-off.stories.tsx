@@ -56,11 +56,14 @@ const NOW = '2026-06-03T00:00:00.000Z';
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(await canvas.findByText(/2 day\(s\) · United States/)).toBeInTheDocument();
-    await expect(await canvas.findByText(/1 day\(s\) · Germany/)).toBeInTheDocument();
-    await expect(canvas.queryByText(/5 day\(s\) · United States/)).not.toBeInTheDocument();
-    await expect(canvas.queryByText(/4 day\(s\) · United States/)).not.toBeInTheDocument();
-    await expect(canvas.queryByText(/3 day\(s\) · Brazil/)).not.toBeInTheDocument();
+    await expect(
+      await canvas.findByText(/Jun 8 - Jun 9 · 2 days · United States/),
+    ).toBeInTheDocument();
+    await expect(await canvas.findByText(/2 days · United States/)).toBeInTheDocument();
+    await expect(await canvas.findByText(/1 day · Germany/)).toBeInTheDocument();
+    await expect(canvas.queryByText(/5 days · United States/)).not.toBeInTheDocument();
+    await expect(canvas.queryByText(/4 days · United States/)).not.toBeInTheDocument();
+    await expect(canvas.queryByText(/3 days · Brazil/)).not.toBeInTheDocument();
   },
 };
 
@@ -68,14 +71,14 @@ export const CancelPendingRequest: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await expect(await canvas.findByText(/2 day\(s\) · United States/)).toBeInTheDocument();
+    await expect(await canvas.findByText(/2 days · United States/)).toBeInTheDocument();
     await userEvent.click((await canvas.findAllByRole('button', { name: 'Cancel' }))[0]);
 
     await expect(
       await canvas.findByText('Request cancelled', undefined, { timeout: 5000 }),
     ).toBeInTheDocument();
     await waitFor(() => expect(canvas.getByText('Cancelled')).toBeInTheDocument());
-    await expect(canvas.getByText(/1 day\(s\) · Germany/)).toBeInTheDocument();
+    await expect(canvas.getByText(/1 day · Germany/)).toBeInTheDocument();
     await waitFor(() => expect(canvas.getByText('14')).toBeInTheDocument());
   },
 };
@@ -174,9 +177,9 @@ async function submitTwoDays(canvasElement: HTMLElement) {
   const canvas = within(canvasElement);
   await canvas.findByText('12');
   await userEvent.clear(await canvas.findByLabelText('Start date'));
-  await userEvent.type(await canvas.findByLabelText('Start date'), '2026-06-08');
+  await userEvent.type(await canvas.findByLabelText('Start date'), '2026-06-12');
   await userEvent.clear(await canvas.findByLabelText('End date'));
-  await userEvent.type(await canvas.findByLabelText('End date'), '2026-06-09');
+  await userEvent.type(await canvas.findByLabelText('End date'), '2026-06-15');
   await userEvent.click(await canvas.findByRole('button', { name: /request time off/i }));
 }
 

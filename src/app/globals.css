@@ -46,3 +46,22 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.time-off-date-input {
+  padding-right: 2.75rem;
+  position: relative;
+}
+
+.time-off-date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(1) brightness(1.5);
+  height: 1rem;
+  margin: 0;
+  opacity: 1;
+  padding: 0;
+  position: absolute;
+  right: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+}
