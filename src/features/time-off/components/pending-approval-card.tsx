@@ -8,19 +8,19 @@ import { useDenyRequest } from '../hooks/use-deny-request';
 import type { TimeOffRequest } from '../api/types';
 import { PendingApprovalRow } from './pending-approval-row';
 
-type PendingApprovalItemProps = {
+type PendingApprovalCardProps = {
   request: TimeOffRequest;
   locationLabel?: string;
   teamConflictSummary?: string;
   showEmployeeLabel?: boolean;
 };
 
-export function PendingApprovalItem({
+export function PendingApprovalCard({
   request,
   locationLabel,
   teamConflictSummary,
   showEmployeeLabel = true,
-}: PendingApprovalItemProps) {
+}: PendingApprovalCardProps) {
   const cell = {
     employeeId: request.employeeId,
     locationId: request.locationId,
@@ -45,9 +45,9 @@ export function PendingApprovalItem({
   }, [balanceQuery.data?.version]);
 
   async function handleRefresh() {
-    const result = await balanceQuery.refetch();
-    if (result.data) {
-      openedVersion.current = result.data.version;
+    const refetched = await balanceQuery.refetch();
+    if (refetched.data) {
+      openedVersion.current = refetched.data.version;
       setStale(false);
     }
   }

@@ -4,7 +4,7 @@ import { Typography } from '@/shared/components';
 
 import { groupRequestsByEmployee, teamConflictSummary } from '../api/team-conflict';
 import type { TimeOffRequest } from '../api/types';
-import { PendingApprovalItem } from './pending-approval-item';
+import { PendingApprovalCard } from './pending-approval-card';
 
 type PendingApprovalListProps = {
   requests: TimeOffRequest[];
@@ -49,7 +49,7 @@ export function PendingApprovalList({
 
             <div className="flex flex-col gap-4">
               {group.requests.map((request) => (
-                <PendingApprovalItem
+                <PendingApprovalCard
                   key={request.id}
                   request={request}
                   locationLabel={locationLabels?.[request.locationId]}

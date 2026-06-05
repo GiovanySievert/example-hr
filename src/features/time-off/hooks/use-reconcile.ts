@@ -39,9 +39,9 @@ export function useReconcile(options: UseReconcileOptions = {}) {
         employeeId: incoming.employeeId,
         locationId: incoming.locationId,
       };
-      const key = cellKey(cell);
+      const cellId = cellKey(cell);
 
-      if (inFlight.has(key)) continue;
+      if (inFlight.has(cellId)) continue;
 
       const existing = queryClient.getQueryData<Balance>(timeOffKeys.balance(cell));
 

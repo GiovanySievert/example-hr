@@ -17,7 +17,7 @@ export function groupRequestsByEmployee(requests: TimeOffRequest[]): EmployeeReq
   }
 
   return [...grouped.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([employeeIdA], [employeeIdB]) => employeeIdA.localeCompare(employeeIdB))
     .map(([employeeId, employeeRequests]) => ({
       employeeId,
       requests: employeeRequests,

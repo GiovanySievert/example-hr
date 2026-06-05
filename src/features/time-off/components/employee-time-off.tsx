@@ -66,9 +66,9 @@ export function EmployeeTimeOff({ employeeId, reconcileIntervalMs }: EmployeeTim
   );
 
   function statusFor(cell: Balance): BalanceCardStatus {
-    const key = cellKey(cell);
-    if (inFlight.has(key)) return BalanceCardStatus.Optimistic;
-    if (refreshed.has(key)) return BalanceCardStatus.Refreshed;
+    const cellId = cellKey(cell);
+    if (inFlight.has(cellId)) return BalanceCardStatus.Optimistic;
+    if (refreshed.has(cellId)) return BalanceCardStatus.Refreshed;
     return BalanceCardStatus.Idle;
   }
 

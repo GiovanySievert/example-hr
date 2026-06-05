@@ -10,6 +10,7 @@ export function usePendingRequests() {
   return useQuery({
     queryKey: timeOffKeys.requests(),
     queryFn: fetchRequests,
-    select: (requests) => requests.filter((r) => r.status === TimeOffRequestStatus.Pending),
+    select: (requests) =>
+      requests.filter((request) => request.status === TimeOffRequestStatus.Pending),
   });
 }
