@@ -2,11 +2,14 @@
 
 import { Typography } from '@/shared/components';
 
+import { dateRangesOverlap, formatDateRange } from '../api/date-range';
+import { TimeOffRequestStatus } from '../api/enums';
 import type { TimeOffRequest } from '../api/types';
 import { PendingApprovalItem } from './pending-approval-item';
 
 type PendingApprovalListProps = {
   requests: TimeOffRequest[];
+  allRequests?: TimeOffRequest[];
   locationLabels?: Record<string, string>;
 };
 
@@ -36,7 +39,38 @@ function pendingLabel(count: number) {
   return count === 1 ? '1 pending request' : `${count} pending requests`;
 }
 
-export function PendingApprovalList({ requests, locationLabels }: PendingApprovalListProps) {
+function isActiveRequest(request: TimeOffRequest) {
+  return (
+    request.status === TimeOffRequestStatus.Pending ||
+    request.status === TimeOffRequestStatus.Approved
+  );
+}
+
+function teamConflictSummary(request: TimeOffRequest, allRequests: TimeOffRequest[]) {
+  const conflicts = allRequests.filter(
+    (other) =>
+      other.id !== request.id &&
+      other.employeeId !== request.employeeId &&
+      isActiveRequest(other) &&
+      dateRangesOverlap(request.startDate, request.endDate, other.startDate, other.endDate),
+  );
+
+  if (conflicts.length === 0) return undefined;
+
+  const employees = [...new Set(conflicts.map((conflict) => `Employee ${conflict.employeeId}`))];
+  const range = formatDateRange(request.startDate, request.endDate);
+  const employeeLabel =
+    employees.length === 1
+      ? employees[0]
+      : `${employees.slice(0, -1).join(', ')} and ${employees.at(-1)}`;
+  return `${employeeLabel} ${employees.length === 1 ? 'has' : 'have'} overlapping time off${range ? ` during ${range}` : ''}.`;
+}
+
+export function PendingApprovalList({
+  requests,
+  allRequests = requests,
+  locationLabels,
+}: PendingApprovalListProps) {
   if (requests.length === 0) {
     return <Typography variant="muted">No pending requests.</Typography>;
   }
@@ -69,6 +103,7 @@ export function PendingApprovalList({ requests, locationLabels }: PendingApprova
                   key={request.id}
                   request={request}
                   locationLabel={locationLabels?.[request.locationId]}
+                  teamConflictSummary={teamConflictSummary(request, allRequests)}
                   showEmployeeLabel={false}
                 />
               ))}

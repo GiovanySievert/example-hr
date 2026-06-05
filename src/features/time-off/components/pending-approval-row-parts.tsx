@@ -42,6 +42,14 @@ export function InsufficientNote() {
   return <Typography variant="muted">Insufficient available balance for this request.</Typography>;
 }
 
+export function TeamConflictNote({ summary }: { summary: string }) {
+  return (
+    <div className="rounded-md border border-border bg-secondary p-3">
+      <Typography variant="muted">{summary}</Typography>
+    </div>
+  );
+}
+
 export function DecisionActions({
   deciding,
   approveDisabled,

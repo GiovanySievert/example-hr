@@ -56,6 +56,7 @@ export const PendingBalanceOk: Story = {
     await waitFor(() => expect(canvas.getAllByText('2 pending requests')).toHaveLength(2));
     await expect(canvas.getAllByText('1 pending request')).toHaveLength(1);
     await expect(canvas.getAllByText('Employee e1')).toHaveLength(1);
+    await expect(await canvas.findAllByText(/overlapping time off/)).not.toHaveLength(0);
   },
 };
 
@@ -76,6 +77,8 @@ function seedSingleRequest() {
         id: 'r1',
         employeeId: 'e1',
         locationId: 'us',
+        startDate: '2026-06-08',
+        endDate: '2026-06-09',
         days: 2,
         status: TimeOffRequestStatus.Pending,
         createdAt: NOW,
@@ -161,6 +164,8 @@ export const PendingBalanceInsufficient: Story = {
           id: 'r1',
           employeeId: 'e1',
           locationId: 'us',
+          startDate: '2026-06-08',
+          endDate: '2026-06-12',
           days: 5,
           status: TimeOffRequestStatus.Pending,
           createdAt: NOW,

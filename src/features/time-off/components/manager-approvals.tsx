@@ -2,7 +2,8 @@
 
 import { Typography } from '@/shared/components';
 
-import { usePendingRequests } from '../hooks/use-pending-requests';
+import { TimeOffRequestStatus } from '../api/enums';
+import { useRequests } from '../hooks/use-requests';
 import { PendingApprovalList } from './pending-approval-list';
 
 const LOCATION_LABELS: Record<string, string> = {
@@ -12,13 +13,24 @@ const LOCATION_LABELS: Record<string, string> = {
 };
 
 export function ManagerApprovals() {
-  const requestsQuery = usePendingRequests();
+  const requestsQuery = useRequests();
 
   if (requestsQuery.isLoading) {
     return <Typography variant="muted">Loading requests…</Typography>;
   }
 
+  if (requestsQuery.isError) {
+    return <Typography variant="muted">Could not load approval requests.</Typography>;
+  }
+
+  const requests = requestsQuery.data ?? [];
+  const pendingRequests = requests.filter((request) => request.status === TimeOffRequestStatus.Pending);
+
   return (
-    <PendingApprovalList requests={requestsQuery.data ?? []} locationLabels={LOCATION_LABELS} />
+    <PendingApprovalList
+      requests={pendingRequests}
+      allRequests={requests}
+      locationLabels={LOCATION_LABELS}
+    />
   );
 }

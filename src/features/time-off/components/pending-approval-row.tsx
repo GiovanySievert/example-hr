@@ -2,13 +2,14 @@
 
 import { Card, Typography } from '@/shared/components';
 
-import { formatDateRange } from '../api/date-range';
+import { formatDateRange, formatDayCount } from '../api/date-range';
 import type { Balance, TimeOffRequest } from '../api/types';
 import {
   BalanceContext,
   DecisionActions,
   InsufficientNote,
   StaleWarning,
+  TeamConflictNote,
 } from './pending-approval-row-parts';
 
 type PendingApprovalRowProps = {
@@ -18,6 +19,7 @@ type PendingApprovalRowProps = {
   balanceLoading?: boolean;
   stale?: boolean;
   deciding?: boolean;
+  teamConflictSummary?: string;
   showEmployeeLabel?: boolean;
   onApprove: () => void;
   onDeny: () => void;
@@ -31,6 +33,7 @@ export function PendingApprovalRow({
   balanceLoading = false,
   stale = false,
   deciding = false,
+  teamConflictSummary,
   showEmployeeLabel = true,
   onApprove,
   onDeny,
@@ -40,7 +43,7 @@ export function PendingApprovalRow({
   const insufficient = balance !== undefined && request.days > balance.available;
   const approveDisabled = deciding || stale || balanceLoading || insufficient || !balance;
   const dateRange = formatDateRange(request.startDate, request.endDate);
-  const requestLabel = `${dateRange ? `${dateRange} · ` : ''}${request.days} day(s) · ${location}`;
+  const requestLabel = `${dateRange ? `${dateRange} · ` : ''}${formatDayCount(request.days)} · ${location}`;
 
   return (
     <Card className="w-full">
@@ -56,6 +59,8 @@ export function PendingApprovalRow({
         </div>
 
         {stale ? <StaleWarning onRefresh={onRefresh} disabled={deciding} /> : null}
+
+        {teamConflictSummary ? <TeamConflictNote summary={teamConflictSummary} /> : null}
 
         {insufficient && !stale ? <InsufficientNote /> : null}
 
