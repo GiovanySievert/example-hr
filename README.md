@@ -21,6 +21,9 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
+No environment variables are required — the app runs entirely against the in-memory mock HCM.
+See [`.env.example`](.env.example) for the optional overrides (e.g. disabling the MSW worker).
+
 ## Scripts
 
 | Command                   | Description                                         |
