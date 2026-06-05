@@ -143,6 +143,47 @@ then verify against the SoT, and recover _honestly_ when the SoT disagrees.
 
 ## 4. Alternatives analysed
 
+### 4.0 Library choices: data fetching and state management
+
+The brief asks us to pick the data-fetching and state-management tools deliberately. The deciding
+factor is the shape of the problem: **almost everything in this feature is server state owned by the
+HCM** — balances and requests that are fetched, cached, invalidated, re-read and reconciled. Very
+little is true client state. So the two choices are really one decision (a server-state cache) plus
+a small, deliberate complement (ephemeral UI state).
+
+**Data fetching — TanStack React Query (chosen).**
+
+- **vs. `fetch` in `useEffect` / hand-rolled cache**: we would have to reimplement caching by key,
+  request deduplication, background refetch, `staleTime`, query invalidation, and the
+  optimistic-update lifecycle (`onMutate` / `onError` / `onSettled` with rollback context). That
+  lifecycle _is_ the heart of this feature (C2, C4, C5); rebuilding it by hand is exactly the
+  error-prone code Query exists to remove.
+- **vs. SWR**: very capable for reads, but Query's **mutation** model — typed `onMutate` context for
+  optimistic apply + rollback, and granular `invalidateQueries` / `setQueryData` — maps directly
+  onto the write path and the per-cell vs corpus invalidation strategy (§4.2). That mutation
+  ergonomics gap is what tips it.
+- **vs. RTK Query**: would be the natural pick _if_ we were already on Redux. We are not, and
+  adopting the Redux toolchain only to get a query layer is weight we do not need.
+- **Decision**: React Query. Its cache is keyed exactly the way the domain is — **per cell**
+  (`['balance', employeeId, locationId]`) and **corpus** (`['balances']`) — so the SoT-reconciliation
+  story (re-read a cell, reconcile the corpus, guard in-flight cells) is expressed in the library's
+  own primitives rather than around them.
+
+**State management — Jotai (chosen), scoped to ephemeral UI state only.**
+
+- The only genuinely client-owned state is small and transient: which cells have an in-flight
+  mutation, which were just refreshed (the badge), and the locally-held "reverted" request rows.
+  Putting this in React Query would abuse the cache; putting it in React Context would re-render
+  broad subtrees on every change.
+- **vs. Redux / Zustand**: both work, but a global store + reducers/actions is ceremony for what is
+  a handful of `Set<string>` and a list. Jotai's **atom-per-concern** model keeps each piece of UI
+  state independent and co-located with the code that uses it, and only the components reading a
+  given atom re-render.
+- **Decision**: Jotai for ephemeral UI state, React Query for all server state. The boundary is
+  explicit (§5): _if it comes from the HCM it lives in Query; if it is UI-only it lives in Jotai._
+  Keeping client state this small is itself the point — most of the hard state is server state, and
+  it belongs in the cache.
+
 ### 4.1 Optimistic vs pessimistic write
 
 - **Pessimistic** (wait for HCM, then show result): trivially correct, never shows a state the
@@ -272,7 +313,7 @@ gaps a production version would close, ordered by how much they shape the rest o
 - **Accrual, carry-over and expiry.** Balances are seeded as static numbers. A real system accrues
   N/month from a start date, caps accumulation, carries a bounded amount across the year, and
   expires "use-it-or-lose-it" days. The anniversary bonus is the only accrual event modelled today;
-  the fiscal-year rule only *blocks* a crossing request, it does not roll the balance over.
+  the fiscal-year rule only _blocks_ a crossing request, it does not roll the balance over.
 - **Holiday & working-day calendars per location.** `countBusinessDays` counts Mon–Fri only and
   ignores national/regional holidays — a real gap for a per-location system. Business days should
   be derived from the HCM/calendar source of truth, not from weekdays.
