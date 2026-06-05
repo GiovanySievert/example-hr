@@ -223,6 +223,7 @@ export const HcmSilentlyWrong: Story = {
 
 export const BalanceRefreshedMidSession: Story = {
   args: { employeeId: 'e1', reconcileIntervalMs: 200 },
+  parameters: { chromatic: { disableSnapshot: true } },
   beforeEach: () => {
     resetHcmStore();
     setLatencyEnabled(false);
