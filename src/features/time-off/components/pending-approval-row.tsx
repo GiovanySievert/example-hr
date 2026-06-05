@@ -2,6 +2,7 @@
 
 import { Card, Typography } from '@/shared/components';
 
+import { isApproveDisabled, isInsufficientBalance } from '../api/approval-decision';
 import { formatDateRange, formatDayCount } from '../api/date-range';
 import type { Balance, TimeOffRequest } from '../api/types';
 import {
@@ -40,8 +41,14 @@ export function PendingApprovalRow({
   onRefresh,
 }: PendingApprovalRowProps) {
   const location = locationLabel ?? request.locationId.toUpperCase();
-  const insufficient = balance !== undefined && request.days > balance.available;
-  const approveDisabled = deciding || stale || balanceLoading || insufficient || !balance;
+  const insufficient = isInsufficientBalance(request, balance);
+  const approveDisabled = isApproveDisabled({
+    balance,
+    days: request.days,
+    deciding,
+    stale,
+    balanceLoading,
+  });
   const dateRange = formatDateRange(request.startDate, request.endDate);
   const requestLabel = `${dateRange ? `${dateRange} · ` : ''}${formatDayCount(request.days)} · ${location}`;
 

@@ -1,7 +1,10 @@
 import { renderHook, waitFor } from '@testing-library/react';
+import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { hcmStore, resetHcmStore, setLatencyEnabled, WriteBehavior } from '@/mocks/hcm';
+import { server } from '@/mocks/server';
+import { toastsAtom } from '@/shared/components/toast';
 
 import { fetchBalance } from '../api/hcm-client';
 import { timeOffKeys } from '../api/query-keys';
@@ -165,5 +168,28 @@ describe('useFileTimeOff', () => {
           request.days === 3,
       ),
     ).toBe(true);
+  });
+
+  it('rolls back and toasts a generic message when the HCM write is unreachable', async () => {
+    const { Wrapper, queryClient, store } = createWrapper();
+    const before = await seedCellCache(queryClient);
+    server.use(http.post('/api/hcm/balance', () => HttpResponse.error()));
+
+    const { result } = renderHook(() => useFileTimeOff(), { wrapper: Wrapper });
+    result.current.mutate(ONE_DAY);
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    const cached = queryClient.getQueryData<Balance>(timeOffKeys.balance(CELL));
+    expect(cached?.available).toBe(before.available);
+    expect(cached?.pending).toBe(before.pending);
+    expect(store.get(rolledBackRequestsAtom)).toMatchObject([
+      { employeeId: CELL.employeeId, locationId: CELL.locationId, days: 1, reverted: true },
+    ]);
+    expect(store.get(toastsAtom)[0]).toMatchObject({
+      variant: 'error',
+      title: 'Request not filed',
+      description: 'Could not reach the HCM. Please try again.',
+    });
   });
 });

@@ -4,9 +4,9 @@ import { useState } from 'react';
 
 import { Button, Input, Select, Typography } from '@/shared/components';
 
-import { countBusinessDays, dateRangesOverlap, formatDayCount } from '../api/date-range';
-import { TimeOffRequestStatus } from '../api/enums';
-import { MAX_REQUEST_DATE, MAX_REQUEST_DATE_LABEL, validateTimeOffPolicy } from '../api/request-policy';
+import { countBusinessDays, formatDayCount } from '../api/date-range';
+import { MAX_REQUEST_DATE, MAX_REQUEST_DATE_LABEL } from '../api/request-policy';
+import { validateTimeOffRequest } from '../api/request-validation';
 import type { TimeOffRequest } from '../api/types';
 
 export type LocationOption = { id: string; label: string; available?: number };
@@ -48,42 +48,23 @@ export function TimeOffRequestForm({
   const requestedDays = outsideSupportedRange ? 0 : countBusinessDays(startDate, endDate);
   const selectedLocationMaxDays =
     locations.find((location) => location.id === locationId)?.available ?? maxDays;
-  const overlappingRequest = existingRequests.find(
-    (request) =>
-      !request.reverted &&
-      (request.status === TimeOffRequestStatus.Pending ||
-        request.status === TimeOffRequestStatus.Approved) &&
-      dateRangesOverlap(startDate, endDate, request.startDate, request.endDate),
-  );
-
-  function validate(parsedDays: number): string | null {
-    if (!locationId) return 'Select a location.';
-    if (!startDate || !endDate) return 'Select a start and end date.';
-    if (startDate > endDate) return 'End date must be on or after start date.';
-    const policyViolation = validateTimeOffPolicy({ startDate, endDate, days: parsedDays });
-    if (policyViolation) return policyViolation.message;
-    if (overlappingRequest) {
-      return 'This date range overlaps an existing time-off request.';
-    }
-    if (!Number.isInteger(parsedDays) || parsedDays <= 0) {
-      return 'Select at least one weekday.';
-    }
-    if (selectedLocationMaxDays !== undefined && parsedDays > selectedLocationMaxDays) {
-      return `You only have ${formatDayCount(selectedLocationMaxDays)} available.`;
-    }
-    return null;
-  }
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    const parsedDays = requestedDays;
-    const validationError = validate(parsedDays);
+    const validationError = validateTimeOffRequest({
+      locationId,
+      startDate,
+      endDate,
+      days: requestedDays,
+      maxDays: selectedLocationMaxDays,
+      existingRequests,
+    });
     if (validationError) {
       setError(validationError);
       return;
     }
     setError(null);
-    onSubmit({ locationId, startDate, endDate, days: parsedDays });
+    onSubmit({ locationId, startDate, endDate, days: requestedDays });
   }
 
   const submitLabel = submitting ? 'Submitting…' : 'Request time off';
