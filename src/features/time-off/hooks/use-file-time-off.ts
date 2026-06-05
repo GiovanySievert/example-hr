@@ -1,11 +1,12 @@
 'use client';
 
-import { type QueryClient, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSetAtom } from 'jotai';
 
 import { useToast } from '@/shared/components/toast';
 
 import { formatDayCount } from '../api/date-range';
+import { toCell } from '../api/cell-key';
 import { fetchBalance, fileTimeOff, HcmRequestError } from '../api/hcm-client';
 import { TimeOffRequestStatus } from '../api/enums';
 import { timeOffKeys } from '../api/query-keys';
@@ -16,6 +17,7 @@ import {
   markCellInFlightAtom,
   type RevertedTimeOffRequest,
 } from '../state';
+import { readCachedBalance, writeBalanceEverywhere } from './balance-cache';
 
 type FileTimeOffVariables = BalanceCell & {
   startDate: string;
@@ -26,23 +28,6 @@ type FileTimeOffVariables = BalanceCell & {
 type MutationContext = {
   previous?: Balance;
 };
-
-function isSameCell(balance: Balance, cell: BalanceCell) {
-  return balance.employeeId === cell.employeeId && balance.locationId === cell.locationId;
-}
-
-function readCachedBalance(queryClient: QueryClient, cell: BalanceCell) {
-  const perCell = queryClient.getQueryData<Balance>(timeOffKeys.balance(cell));
-  if (perCell) return perCell;
-  return queryClient.getQueryData<Balance[]>(timeOffKeys.balances())?.find((balance) =>
-    isSameCell(balance, cell),
-  );
-}
-
-function writeBalanceToCorpus(balances: Balance[] | undefined, authoritative: Balance) {
-  if (!balances) return balances;
-  return balances.map((balance) => (isSameCell(balance, authoritative) ? authoritative : balance));
-}
 
 function applyOptimisticDelta(balance: Balance, days: number): Balance {
   return {
@@ -93,46 +78,31 @@ export function useFileTimeOff() {
 
   return useMutation<Balance, Error, FileTimeOffVariables, MutationContext>({
     mutationFn: async ({ employeeId, locationId, startDate, endDate, days }) => {
-      const cell: BalanceCell = { employeeId, locationId };
+      const cell = toCell({ employeeId, locationId });
       const current = readCachedBalance(queryClient, cell) ?? (await fetchBalance(cell));
       const expectedVersion = current.version;
       return fileTimeOff({ employeeId, locationId, startDate, endDate, days, expectedVersion });
     },
 
-    onMutate: async ({ employeeId, locationId, days }) => {
-      const cell: BalanceCell = { employeeId, locationId };
-      const key = timeOffKeys.balance(cell);
-      await queryClient.cancelQueries({ queryKey: key });
+    onMutate: async (variables) => {
+      const cell = toCell(variables);
+      await queryClient.cancelQueries({ queryKey: timeOffKeys.balance(cell) });
       await queryClient.cancelQueries({ queryKey: timeOffKeys.balances() });
 
       const previous = readCachedBalance(queryClient, cell);
       if (previous) {
-        const optimistic = applyOptimisticDelta(previous, days);
-        queryClient.setQueryData<Balance>(key, optimistic);
-        queryClient.setQueryData<Balance[]>(timeOffKeys.balances(), (balances) =>
-          writeBalanceToCorpus(balances, optimistic),
-        );
+        writeBalanceEverywhere(queryClient, applyOptimisticDelta(previous, variables.days));
       }
       markInFlight(cell);
       return { previous };
     },
 
     onError: (error, variables, context) => {
-      const { employeeId, locationId } = variables;
-      const cell: BalanceCell = { employeeId, locationId };
-      const key = timeOffKeys.balance(cell);
       if (context?.previous) {
-        queryClient.setQueryData<Balance>(key, context.previous);
-        queryClient.setQueryData<Balance[]>(timeOffKeys.balances(), (balances) =>
-          writeBalanceToCorpus(balances, context.previous as Balance),
-        );
+        writeBalanceEverywhere(queryClient, context.previous);
       }
-
       if (error instanceof HcmRequestError && error.body.current) {
-        queryClient.setQueryData<Balance>(key, error.body.current);
-        queryClient.setQueryData<Balance[]>(timeOffKeys.balances(), (balances) =>
-          writeBalanceToCorpus(balances, error.body.current as Balance),
-        );
+        writeBalanceEverywhere(queryClient, error.body.current);
       }
 
       const description =
@@ -149,17 +119,11 @@ export function useFileTimeOff() {
     },
 
     onSuccess: async (_data, variables, context) => {
-      const { employeeId, locationId, days } = variables;
-      const cell: BalanceCell = { employeeId, locationId };
-      const key = timeOffKeys.balance(cell);
-      const authoritative = await fetchBalance(cell);
+      const authoritative = await fetchBalance(toCell(variables));
 
       const before = context?.previous;
-      if (before && isSilentlyWrong(before, authoritative, days)) {
-        queryClient.setQueryData<Balance>(key, authoritative);
-        queryClient.setQueryData<Balance[]>(timeOffKeys.balances(), (balances) =>
-          writeBalanceToCorpus(balances, authoritative),
-        );
+      if (before && isSilentlyWrong(before, authoritative, variables.days)) {
+        writeBalanceEverywhere(queryClient, authoritative);
         addRolledBackRequest(makeRolledBackRequest(variables));
         toast({
           variant: 'error',
@@ -170,22 +134,19 @@ export function useFileTimeOff() {
         return;
       }
 
-      queryClient.setQueryData<Balance>(key, authoritative);
-      queryClient.setQueryData<Balance[]>(timeOffKeys.balances(), (balances) =>
-        writeBalanceToCorpus(balances, authoritative),
-      );
+      writeBalanceEverywhere(queryClient, authoritative);
       await queryClient.invalidateQueries({
         queryKey: timeOffKeys.requests(),
       });
       toast({
         variant: 'success',
         title: 'Request filed',
-        description: `${formatDayCount(days)} submitted for approval.`,
+        description: `${formatDayCount(variables.days)} submitted for approval.`,
       });
     },
 
-    onSettled: (_data, _error, { employeeId, locationId }) => {
-      clearInFlight({ employeeId, locationId });
+    onSettled: (_data, _error, variables) => {
+      clearInFlight(toCell(variables));
     },
   });
 }

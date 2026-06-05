@@ -9,6 +9,7 @@ import { Typography } from '@/shared/components';
 import { cellKey } from '../api/cell-key';
 import type { Balance } from '../api/types';
 import { BalanceCardStatus } from '../api/enums';
+import { LOCATION_LABELS, locationLabel } from '../api/locations';
 import { useBalances } from '../hooks/use-balances';
 import { useCancelRequest } from '../hooks/use-cancel-request';
 import { useFileTimeOff } from '../hooks/use-file-time-off';
@@ -23,12 +24,6 @@ import {
 import { BalanceCard } from './balance-card';
 import { TimeOffRequestForm, type LocationOption } from './time-off-request-form';
 import { RequestStatusList } from './request-status-list';
-
-const LOCATION_LABELS: Record<string, string> = {
-  us: 'United States',
-  de: 'Germany',
-  br: 'Brazil',
-};
 
 type EmployeeTimeOffProps = {
   employeeId: string;
@@ -56,7 +51,7 @@ export function EmployeeTimeOff({ employeeId, reconcileIntervalMs }: EmployeeTim
     () =>
       cells.map((cell) => ({
         id: cell.locationId,
-        label: LOCATION_LABELS[cell.locationId] ?? cell.locationId.toUpperCase(),
+        label: locationLabel(cell.locationId),
         available: cell.available,
       })),
     [cells],

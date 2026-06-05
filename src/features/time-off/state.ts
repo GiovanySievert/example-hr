@@ -7,38 +7,39 @@ export type RevertedTimeOffRequest = TimeOffRequest & {
   reverted: true;
 };
 
-export const inFlightCellsAtom = atom<Set<string>>(new Set<string>());
+function createCellSetAtoms() {
+  const setAtom = atom<Set<string>>(new Set<string>());
 
-export const isCellInFlightAtom = atom((get) => {
-  const cells = get(inFlightCellsAtom);
-  return (cell: BalanceCell) => cells.has(cellKey(cell));
-});
+  const hasAtom = atom((get) => {
+    const cells = get(setAtom);
+    return (cell: BalanceCell) => cells.has(cellKey(cell));
+  });
 
-export const markCellInFlightAtom = atom(null, (get, set, cell: BalanceCell) => {
-  const next = new Set(get(inFlightCellsAtom));
-  next.add(cellKey(cell));
-  set(inFlightCellsAtom, next);
-});
+  const addAtom = atom(null, (get, set, cell: BalanceCell) => {
+    const next = new Set(get(setAtom));
+    next.add(cellKey(cell));
+    set(setAtom, next);
+  });
 
-export const clearCellInFlightAtom = atom(null, (get, set, cell: BalanceCell) => {
-  const next = new Set(get(inFlightCellsAtom));
-  next.delete(cellKey(cell));
-  set(inFlightCellsAtom, next);
-});
+  const removeAtom = atom(null, (get, set, cell: BalanceCell) => {
+    const next = new Set(get(setAtom));
+    next.delete(cellKey(cell));
+    set(setAtom, next);
+  });
 
-export const refreshedCellsAtom = atom<Set<string>>(new Set<string>());
+  return { setAtom, hasAtom, addAtom, removeAtom };
+}
 
-export const markCellRefreshedAtom = atom(null, (get, set, cell: BalanceCell) => {
-  const next = new Set(get(refreshedCellsAtom));
-  next.add(cellKey(cell));
-  set(refreshedCellsAtom, next);
-});
+const inFlight = createCellSetAtoms();
+export const inFlightCellsAtom = inFlight.setAtom;
+export const isCellInFlightAtom = inFlight.hasAtom;
+export const markCellInFlightAtom = inFlight.addAtom;
+export const clearCellInFlightAtom = inFlight.removeAtom;
 
-export const acknowledgeCellRefreshedAtom = atom(null, (get, set, cell: BalanceCell) => {
-  const next = new Set(get(refreshedCellsAtom));
-  next.delete(cellKey(cell));
-  set(refreshedCellsAtom, next);
-});
+const refreshed = createCellSetAtoms();
+export const refreshedCellsAtom = refreshed.setAtom;
+export const markCellRefreshedAtom = refreshed.addAtom;
+export const acknowledgeCellRefreshedAtom = refreshed.removeAtom;
 
 export const rolledBackRequestsAtom = atom<RevertedTimeOffRequest[]>([]);
 

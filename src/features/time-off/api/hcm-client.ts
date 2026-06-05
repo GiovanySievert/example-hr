@@ -30,64 +30,58 @@ async function parseError(response: Response): Promise<never> {
   throw new HcmRequestError(response.status, body);
 }
 
-export async function fetchBalance(cell: BalanceCell): Promise<Balance> {
+async function getJson<T>(url: string): Promise<T> {
+  const response = await fetch(url);
+  if (!response.ok) return parseError(response);
+  return (await response.json()) as T;
+}
+
+async function postJson<T>(url: string, payload: unknown): Promise<T> {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) return parseError(response);
+  return (await response.json()) as T;
+}
+
+function decideRequest(
+  action: 'approve' | 'deny' | 'cancel',
+  id: string,
+  payload: DecisionPayload,
+): Promise<TimeOffRequest> {
+  return postJson<TimeOffRequest>(`/api/hcm/requests/${id}/${action}`, payload);
+}
+
+export function fetchBalance(cell: BalanceCell): Promise<Balance> {
   const params = new URLSearchParams({
     employeeId: cell.employeeId,
     locationId: cell.locationId,
   });
-  const response = await fetch(`/api/hcm/balance?${params.toString()}`);
-  if (!response.ok) return parseError(response);
-  return (await response.json()) as Balance;
+  return getJson<Balance>(`/api/hcm/balance?${params.toString()}`);
 }
 
-export async function fetchBalances(): Promise<Balance[]> {
-  const response = await fetch('/api/hcm/balances');
-  if (!response.ok) return parseError(response);
-  return (await response.json()) as Balance[];
+export function fetchBalances(): Promise<Balance[]> {
+  return getJson<Balance[]>('/api/hcm/balances');
 }
 
-export async function fileTimeOff(payload: FileTimeOffPayload): Promise<Balance> {
-  const response = await fetch('/api/hcm/balance', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) return parseError(response);
-  return (await response.json()) as Balance;
+export function fileTimeOff(payload: FileTimeOffPayload): Promise<Balance> {
+  return postJson<Balance>('/api/hcm/balance', payload);
 }
 
-export async function fetchRequests(): Promise<TimeOffRequest[]> {
-  const response = await fetch('/api/hcm/requests');
-  if (!response.ok) return parseError(response);
-  return (await response.json()) as TimeOffRequest[];
+export function fetchRequests(): Promise<TimeOffRequest[]> {
+  return getJson<TimeOffRequest[]>('/api/hcm/requests');
 }
 
-export async function approveRequest(id: string, payload: DecisionPayload): Promise<TimeOffRequest> {
-  const response = await fetch(`/api/hcm/requests/${id}/approve`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) return parseError(response);
-  return (await response.json()) as TimeOffRequest;
+export function approveRequest(id: string, payload: DecisionPayload): Promise<TimeOffRequest> {
+  return decideRequest('approve', id, payload);
 }
 
-export async function denyRequest(id: string, payload: DecisionPayload): Promise<TimeOffRequest> {
-  const response = await fetch(`/api/hcm/requests/${id}/deny`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) return parseError(response);
-  return (await response.json()) as TimeOffRequest;
+export function denyRequest(id: string, payload: DecisionPayload): Promise<TimeOffRequest> {
+  return decideRequest('deny', id, payload);
 }
 
-export async function cancelRequest(id: string, payload: DecisionPayload): Promise<TimeOffRequest> {
-  const response = await fetch(`/api/hcm/requests/${id}/cancel`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) return parseError(response);
-  return (await response.json()) as TimeOffRequest;
+export function cancelRequest(id: string, payload: DecisionPayload): Promise<TimeOffRequest> {
+  return decideRequest('cancel', id, payload);
 }

@@ -3,14 +3,9 @@
 import { Typography } from '@/shared/components';
 
 import { TimeOffRequestStatus } from '../api/enums';
+import { LOCATION_LABELS } from '../api/locations';
 import { useRequests } from '../hooks/use-requests';
 import { PendingApprovalList } from './pending-approval-list';
-
-const LOCATION_LABELS: Record<string, string> = {
-  us: 'United States',
-  de: 'Germany',
-  br: 'Brazil',
-};
 
 export function ManagerApprovals() {
   const requestsQuery = useRequests();
