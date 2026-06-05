@@ -40,8 +40,13 @@ then verify against the SoT, and recover _honestly_ when the SoT disagrees.
    for). Latency is variable.
 3. **Batch corpus** — `GET /api/hcm/balances`. The full set of balances. **Expensive and
    slower**; used for initial hydration and periodic background reconciliation.
-4. **Manager** — `GET /api/hcm/requests`, `POST /api/hcm/requests/:id/approve`,
-   `POST /api/hcm/requests/:id/deny`.
+4. **Requests** — `GET /api/hcm/requests` returns the complete request history. The employee
+   view filters it by the active employee; the manager view narrows it to pending requests.
+5. **Employee cancel** — `POST /api/hcm/requests/:id/cancel`. Cancels only pending requests,
+   re-reads the relevant cell version, and returns the days to the balance.
+6. **Manager decisions** — `POST /api/hcm/requests/:id/approve` and
+   `POST /api/hcm/requests/:id/deny`. Decisions include the expected balance version and are
+   rejected if the SoT moved before the decision is applied.
 
 ### Behaviours the mock must reproduce
 
@@ -53,8 +58,10 @@ then verify against the SoT, and recover _honestly_ when the SoT disagrees.
 
 ### Personas
 
-- **Employee** — sees balance, submits a request. _Invariant_: never sees a request go
-  `approved → denied`. A request the user perceives as accepted must not later silently flip.
+- **Employee** — chooses an active employee persona, sees that employee's balances, submits
+  requests by date range, reviews the full request history, and can cancel pending requests.
+  _Invariant_: never sees a request go `approved → denied`. A request the user perceives as
+  accepted must not later silently flip.
 - **Manager** — approves/denies against the **balance that is valid at the moment of the
   decision** (re-read on open / on action), and is blocked from deciding on obviously stale data.
 
@@ -75,12 +82,20 @@ then verify against the SoT, and recover _honestly_ when the SoT disagrees.
 
 - **Per-cell query key**: `['balance', employeeId, locationId]`. Authoritative truth for one cell.
 - **Corpus query key**: `['balances']`. Hydration + background reconcile source.
-- Manager: `['requests']` for the pending queue.
+- **Requests query key**: `['requests']`. Complete request history for the employee view.
+- Manager uses the same request corpus through `usePendingRequests()` for the pending queue.
 
 ### Write path = optimistic mutation with rollback + authoritative re-read
 
 `useFileTimeOff()`:
 
+0. **Input** — the form captures `locationId`, `startDate`, and `endDate`. The UI derives
+   `days` as weekdays in the selected range, then sends dates + derived days to the mock HCM.
+   The current scope intentionally does not model country-specific holiday calendars.
+   Requests cannot overlap an existing `Pending` or `Approved` request for the same employee,
+   regardless of location; `Denied` and `Cancelled` history does not block a new request.
+   Requests must start at least 3 days from today, cannot exceed 10 business days, and cannot
+   cross the fiscal-year boundary.
 1. **onMutate** — snapshot the current cell, apply the optimistic delta (`available -= days`,
    `pending += days`), mark the cell as **in-flight** (Jotai), cancel outgoing cell queries.
 2. **onError** — roll the cell back to the snapshot, add a local `Reverted` request row,
@@ -107,12 +122,24 @@ then verify against the SoT, and recover _honestly_ when the SoT disagrees.
 
 ### Manager path
 
+- The manager queue is grouped by employee so a manager can review one employee's pending
+  requests in context instead of scanning a loose cross-employee list.
+- Pending approvals surface team overlap warnings when another employee has an active
+  `Pending` or `Approved` request in the same date range.
 - Opening / acting on a request triggers an **authoritative re-read of the relevant cell**
   (C2). Approve/deny sends that cell's `expectedBalanceVersion`, and the mock HCM rejects the
   decision if the balance version changed before the decision is applied.
 - Approve/deny is blocked when the cell is obviously stale (version moved since the queue was
   loaded) — the manager is asked to re-read before deciding, preventing a decision on a value
   the SoT has already changed.
+
+### Employee cancel path
+
+- Only pending requests expose a cancel action.
+- Cancel re-reads the authoritative cell, sends the expected balance version to the mock HCM,
+  and rejects if the balance or request moved underneath the user.
+- On success, the request remains in the employee's history as `Cancelled`, and the requested
+  days return from `pending` to `available`.
 
 ## 4. Alternatives analysed
 
@@ -155,20 +182,39 @@ When the corpus reconcile lands while a user action is mid-flight, who wins?
 - **Decision**: **version-guarded reconcile with an in-flight guard.** Not last-write-wins, not
   field merge.
 
+### 4.4 Manual day count vs date range
+
+- **Manual day count**: simpler implementation, but it does not match how employees think about
+  vacations and makes the request history hard to audit.
+- **Date range** (chosen): the employee picks `startDate` and `endDate`; ExampleHR derives
+  weekdays as the requested day count and stores the dates on the request. This makes employee
+  history and manager approvals much easier to understand.
+- **Limitation**: the mock intentionally does not include country-specific holidays or location
+  calendars. A production version should derive business days from the HCM/calendar source of
+  truth rather than from weekdays only.
+
 ## 5. Component tree → concerns
 
 ```
 (employee)/time-off                         Employee view
   TimeOffPage
+    EmployeeTimeOffShell           → active employee persona selector for mock multi-employee data
     BalanceCard / BalanceCell      → C2/C6: per-cell authoritative balance, stale/refreshed badge
-    TimeOffRequestForm             → write path: location + days, client-side validation
-    RequestStatusList              → honest status; real rollback item, never approved→denied
+    TimeOffRequestForm             → write path: location + date range, derives business days
+    RequestStatusList              → full history, cancel pending, rollback item, never approved→denied
 
 (manager)/approvals                         Manager view
   ApprovalsPage
-    PendingRequestList
+    PendingRequestList             → pending requests grouped by employee
       PendingRequestRow            → C2: balance context re-read + expected version at decision time
         approve / deny             → blocked on obviously-stale cell (C1/C5)
+
+Supporting modules:
+  api/date-range                   → weekday counting and display labels
+  api/request-policy               → advance notice, max duration, fiscal-year limits
+  hooks/useRequests                → complete request history
+  hooks/usePendingRequests         → manager pending queue
+  hooks/useCancelRequest           → cancel with balance-version check
 ```
 
 Shared UI ephemeral state (set of in-flight cells, stale/refreshed banners, local rolled-back
@@ -183,20 +229,25 @@ What each layer protects, and why:
   latency, and bonus-applied. If these drift, every layer above is testing a fiction.
 - **Hook tests (`renderHook` + MSW)** — protect the _reconciliation logic_: optimistic apply,
   rollback on conflict/insufficient, silent-wrong detection on the success path, manager version
-  validation, and reconcile that respects an in-flight mutation. This is where the hard decisions
-  in §4 are enforced.
+  validation, employee cancel, request refetch after filing, and reconcile that respects an
+  in-flight mutation. This is where the hard decisions in §4 are enforced.
 - **Storybook component stories** — protect _every visual state_ in isolation, including the
-  uncomfortable ones (rolled-back, hcm-rejected, silently-wrong, refreshed-mid-session).
+  uncomfortable ones (full history, cancelled, rolled-back, hcm-rejected, silently-wrong,
+  refreshed-mid-session, grouped manager approvals).
 - **Storybook interaction tests (play functions, addon-vitest)** — protect the _user-visible
   flows_ end to end against the mock: submit → optimistic → rollback; manager approving with a
-  changed balance; bonus applied mid-session reconciling the UI.
+  changed balance; employee switching persona; employee cancelling a pending request; bonus
+  applied mid-session reconciling the UI.
 
 ### States to cover explicitly
 
 Employee view: `loading`, `empty`, `stale`, `optimistic-pending`, `optimistic-rolled-back`,
-`hcm-rejected` (conflict / insufficient), `hcm-silently-wrong`, `balance-refreshed-mid-session`.
+`hcm-rejected` (conflict / insufficient), `hcm-silently-wrong`, `balance-refreshed-mid-session`,
+`request-history-approved-denied-cancelled`, `request-history-loading-error-syncing`,
+`cancel-pending-request`, `employee-persona-switch`, `request-policy-violation`.
 
 Manager view: `empty`, `pending-balance-ok`, `pending-balance-insufficient`,
+`grouped-by-employee`, `team-overlap-warning`,
 `balance-changed-between-open-and-approve` (conflict on approve), `approval-success`, `denial`.
 
 Coverage is gated on the data-layer hooks and the mock HCM branches (FASE 5); the report is

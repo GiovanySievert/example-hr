@@ -84,12 +84,17 @@ environments:
 
 ## Time-Off
 
-The Time-Off feature lets an **employee** view balances and file requests, and a **manager**
-approve or deny them. The catch: the **HCM** (an external Workday/SAP-like system, here mocked
-with MSW) is the source of truth — ExampleHR only presents and orchestrates. The data layer is
-optimistic with an authoritative re-read and a background reconcile that recovers honestly when
-the HCM disagrees (it never shows a request as approved and then silently denies it). The design
-and the alternatives considered are in [`docs/TRD.md`](docs/TRD.md).
+The Time-Off feature lets an **employee** choose their active employee persona, view balances,
+file requests by date range, cancel pending requests, and review the full request history
+(`Pending`, `Approved`, `Denied`, `Cancelled`, and honest rollback states). A **manager** reviews
+pending requests grouped by employee, then approves or denies against the latest authoritative
+balance.
+
+The catch: the **HCM** (an external Workday/SAP-like system, here mocked with MSW) is the source
+of truth — ExampleHR only presents and orchestrates. The data layer is optimistic with an
+authoritative re-read and a background reconcile that recovers honestly when the HCM disagrees
+(it never shows a request as approved and then silently denies it). The design and the alternatives
+considered are in [`docs/TRD.md`](docs/TRD.md).
 
 ### Run it
 
@@ -101,7 +106,8 @@ npm run dev                 # then open:
 
 The app runs entirely against the in-memory mock HCM — no backend required. A single command
 (`npm run dev`) is enough. Storybook (`npm run storybook`) renders every state in isolation,
-including the failure paths, with interaction tests under `@storybook/addon-vitest`.
+including the failure paths, employee persona switching, cancellation, request history, date-range
+request labels, and grouped manager approvals with interaction tests under `@storybook/addon-vitest`.
 
 ### Driving the mock (browser console)
 
@@ -123,14 +129,45 @@ recovery**: run `hcm.failNext('silent-wrong')`, then file a request — the opti
 reconciled to the authoritative HCM value, a **Reverted** row appears in the request list, and a
 toast explains why.
 
+Employee requests are filed with `startDate` and `endDate`; the UI derives the submitted day count
+from weekdays in that range. The mock does not model country-specific holidays or location
+calendars. A new request is blocked when its date range overlaps an existing `Pending` or
+`Approved` request for the same employee. Requests must start at least 3 days from today, cannot
+exceed 10 business days, cannot cross the fiscal-year boundary, and cannot be dated after
+December 31, 2099. Pending requests can be cancelled from the employee history; the mock HCM
+returns the days from `pending` to `available` and keeps the request visible as `Cancelled`.
+
+The manager approval queue is grouped by employee and highlights team overlap warnings when
+another employee has active time off in the same range.
+
+### Validation
+
+Use these commands before shipping assessment changes:
+
+```bash
+npm run lint
+npm run build
+npm run test:unit
+npm run test:run
+npm run test:coverage
+npm run build-storybook
+```
+
+Storybook coverage for the current product surface lives under `src/features/time-off/components`:
+employee persona switching (`EmployeeTimeOffShell`), date-range filing, cancellation, full request
+history loading/error/syncing states, HCM rollback paths, mid-session balance refresh, request
+policy validation, and manager approvals grouped by employee with team overlap warnings.
+
 ### Layout
 
 ```
 src/features/time-off/
-  api/        types, hcm-client, query keys, cell key
-  hooks/      useBalance(s), useFileTimeOff, useReconcile, manager approve/deny
+  api/        types, hcm-client, query keys, cell key, date-range and request-policy helpers
+  hooks/      useBalance(s), useRequests, useFileTimeOff, useCancelRequest,
+              useReconcile, manager approve/deny
   components/ BalanceCard, TimeOffRequestForm, RequestStatusList,
-              PendingApprovalRow/Item/List, Employee/Manager containers (+ stories)
-  state.ts    Jotai ephemeral UI state (in-flight + refreshed cells)
+              PendingApprovalRow/Item/List, Employee shell/persona selector,
+              Employee/Manager containers (+ stories)
+  state.ts    Jotai ephemeral UI state (in-flight + refreshed cells + rolled-back requests)
 src/mocks/hcm/  in-memory store with real logic, MSW handlers, latency, integration tests
 ```
